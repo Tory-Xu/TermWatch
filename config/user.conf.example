@@ -1,0 +1,30 @@
+# TermWatch 用户配置示例
+# 复制此文件为 user.conf 并根据需要修改
+
+# 个人偏好设置
+AUTO_NOTIFY_THRESHOLD=45          # 我喜欢稍长一点的阈值
+NOTIFICATION_SOUND=glass          # 我喜欢 glass 声音
+NOTIFICATION_TITLE="我的终端"      # 自定义标题
+
+# 自定义消息模板
+SUCCESS_TEMPLATE="🎉 搞定了！"
+ERROR_TEMPLATE="💥 出错了..."
+WARNING_TEMPLATE="🚨 小心！"
+
+# 工作时间设置
+QUIET_HOURS_START=23
+QUIET_HOURS_END=7
+ENABLE_QUIET_HOURS=true
+
+# 项目特定设置示例
+# 如果你主要做前端开发，可能需要这些：
+# FRONTEND_BUILD_THRESHOLD=120     # 前端构建通常较长
+# ENABLE_NPM_MONITORING=true       # 监控 npm 命令
+
+# 如果你主要做后端开发：
+# DOCKER_BUILD_THRESHOLD=300       # Docker 构建更长
+# ENABLE_TEST_MONITORING=true      # 监控测试运行
+
+# 团队协作设置
+# TEAM_NOTIFICATION_WEBHOOK=""     # 团队通知 webhook（可选）
+# ENABLE_SLACK_INTEGRATION=false   # Slack 集成（未来功能）
