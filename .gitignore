@@ -1,0 +1,47 @@
+# macOS 系统文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 用户配置文件（包含敏感信息）
+config/user.conf
+
+# 日志文件
+logs/
+*.log
+
+# 缓存文件
+cache/
+*.cache
+
+# 临时文件
+*.tmp
+*.temp
+*~
+
+# 备份文件
+*.backup
+*.bak
+
+# IDE 文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 测试生成的文件
+test-*
+debug-*
+temp-*
+
+# 密钥文件
+*.key
+*.pem
+secrets.conf
+
+# 安装备份
+.termwatch.backup.*
