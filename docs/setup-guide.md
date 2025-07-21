@@ -20,7 +20,7 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/yourusername/TermWatch.git
+git clone https://github.com/Tory-Xu/TermWatch.git
 cd TermWatch
 
 # 运行安装脚本
