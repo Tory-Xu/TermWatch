@@ -278,14 +278,8 @@ chmod +x ~/.claude/hooks/stop.sh
 
 **解决方案**：
 ```bash
-# 如果出现 "No such file or directory" 错误
-# 创建临时重定向脚本（仅在必要时）
-echo '#!/bin/bash' > ~/.claude/claude-stop-hook.sh
-echo 'exec ~/.claude/hooks/stop.sh "$@"' >> ~/.claude/claude-stop-hook.sh
-chmod +x ~/.claude/claude-stop-hook.sh
-
-# 重启Claude Code后删除临时文件
-# rm ~/.claude/claude-stop-hook.sh
+# 脚本已经直接可用，无需创建额外文件
+# 路径: ~/.claude/hooks/stop.sh
 ```
 
 ## 高级配置
@@ -301,7 +295,7 @@ chmod +x ~/.claude/claude-stop-hook.sh
     "hooks": [
       {
         "type": "command",
-        "command": "/Users/xuxuxu/.claude/claude-stop-hook.sh"
+        "command": "~/.claude/hooks/stop.sh"
       }
     ]
   }
@@ -319,7 +313,7 @@ chmod +x ~/.claude/claude-stop-hook.sh
 可以修改钩子脚本中的通知内容：
 
 ```bash
-# 在 claude-stop-hook.sh 中自定义消息
+# 在 ~/.claude/hooks/stop.sh 中自定义消息
 "$TERMWATCH_SCRIPT" success "🎉 Claude 已完成你的请求！"
 ```
 
