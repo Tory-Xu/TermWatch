@@ -217,12 +217,27 @@ TermWatch/
 │   └── user.conf.example       # 用户配置示例
 ├── scripts/
 │   ├── configure-pushover.sh   # Pushover 配置脚本
+│   ├── configure-serverchan.sh # Server酱配置脚本
 │   ├── test-notification.sh    # 通知测试脚本
 │   └── uninstall.sh           # 卸载脚本
 └── docs/
     ├── setup-guide.md          # 详细设置指南
-    └── troubleshooting.md      # 故障排除指南
+    ├── troubleshooting.md      # 故障排除指南
+    └── claude-code-integration.md # Claude Code 集成教程
 ```
+
+## 🤖 第三方集成
+
+### Claude Code 集成
+
+TermWatch 已完美集成到 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 中，通过钩子系统实现智能通知：
+
+- 📋 **任务完成通知**：Claude 完成任务时自动推送
+- 🔔 **等待输入提醒**：Claude 需要用户输入时发送提醒
+- 🌐 **多渠道推送**：同时推送到 macOS、微信、Apple Watch
+- ⚙️ **自动化配置**：无需手动干预，智能识别推送时机
+
+详细配置教程请参考：[Claude Code 集成指南](docs/claude-code-integration.md)
 
 ## 🛠️ 系统要求
 

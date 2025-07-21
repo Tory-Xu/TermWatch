@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(./install.sh)",
+      "Bash(source:*)",
+      "Bash(notify_success \"TermWatch 安装测试通知\")",
+      "Bash(bash:*)",
+      "Bash(notify_success \"便捷函数测试 - 成功通知\")",
+      "Bash(ping:*)",
+      "Bash(curl:*)",
+      "Bash(grep:*)",
+      "Bash(env)",
+      "Bash(chmod:*)",
+      "Bash(cp:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}
