@@ -63,41 +63,81 @@ npm run build || notify_error "构建失败，请检查日志"
 ./long-running-script.sh; notify_success "脚本执行完成"
 ```
 
-## ⌚ Apple Watch 通知设置
+## 📱 手机和 Apple Watch 通知设置
 
-TermWatch 通过 [Pushover](https://pushover.net/) 服务实现 Apple Watch 通知同步。
+TermWatch 支持两种远程推送服务，可以将通知发送到手机和 Apple Watch：
 
-### 设置步骤
+### 🚀 Server酱（推荐）- 免费微信推送
+
+**优势：**
+- ✅ 完全免费（每日1000条消息）
+- 📱 直接推送到微信
+- ⌚ 支持 Apple Watch（通过微信）
+- 🇨🇳 国内网络稳定
+- 🚀 响应速度快
+
+**设置步骤：**
+
+1. **注册 Server酱**
+   ```bash
+   # 运行配置脚本
+   bash scripts/configure-serverchan.sh
+   ```
+   
+2. **手动配置**（可选）
+   - 访问 [sct.ftqq.com](https://sct.ftqq.com/) 微信登录
+   - 获取 SendKey（SCT开头的34位字符）
+   - 编辑配置文件：
+   ```bash
+   nano ~/.termwatch/config/user.conf
+   # 添加：SERVERCHAN_SENDKEY="xxx"
+   ```
+
+3. **测试通知**
+   ```bash
+   bash src/termwatch.sh --test
+   ```
+
+### 📡 Pushover（备选）- Apple Watch 专用推送
+
+**适合场景：** 需要国际化推送或独立于微信的通知服务
+
+**设置步骤：**
 
 1. **注册 Pushover 账号**
-   - 访问 [pushover.net](https://pushover.net/) 注册免费账号
-   - 在 iPhone App Store 下载 Pushover 应用并登录
+   - 访问 [pushover.net](https://pushover.net/) 注册账号
+   - 下载 iPhone 应用并登录
 
-2. **获取密钥**
-   - 登录 Pushover 网站获取 User Key
-   - 创建应用获取 API Token
-
-3. **配置 TermWatch**
+2. **配置 TermWatch**
    ```bash
    # 运行配置脚本
    bash scripts/configure-pushover.sh
    
-   # 或手动编辑配置文件
+   # 或手动配置
    nano ~/.termwatch/config/user.conf
    ```
-   
-   添加以下配置：
-   ```bash
-   PUSHOVER_USER="你的用户密钥"
-   PUSHOVER_TOKEN="你的API令牌"
-   ```
 
-4. **测试通知**
-   ```bash
-   notify_success "Apple Watch 通知测试"
-   ```
+### 🎛️ 多服务控制
 
-配置完成后，所有通知将同时发送到 macOS 和 Apple Watch！
+TermWatch 支持精细化的推送服务控制：
+
+**配置选项：**
+```bash
+# 推送服务开关（可独立控制每个服务）
+ENABLE_SERVERCHAN=true     # 是否启用 Server酱 推送
+ENABLE_PUSHOVER=true       # 是否启用 Pushover 推送
+ENABLE_PARALLEL_PUSH=false # 推送模式选择
+```
+
+**推送模式：**
+- **优先级模式** (`ENABLE_PARALLEL_PUSH=false`): 优先使用 Server酱，失败时尝试 Pushover
+- **并行模式** (`ENABLE_PARALLEL_PUSH=true`): 同时发送到所有启用的服务
+
+**使用场景：**
+- 只用微信：`ENABLE_SERVERCHAN=true, ENABLE_PUSHOVER=false`
+- 只用 Apple Watch：`ENABLE_SERVERCHAN=false, ENABLE_PUSHOVER=true`
+- 双重保障：`ENABLE_PARALLEL_PUSH=true` 同时发送到两个服务
+- 智能备份：`ENABLE_PARALLEL_PUSH=false` 主用 Server酱，备用 Pushover
 
 ## ⚙️ 配置选项
 

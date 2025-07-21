@@ -148,6 +148,27 @@ send_pushover_notification() {
         https://api.pushover.net/1/messages.json >/dev/null 2>&1
 }
 
+# 发送 Server酱 通知（微信推送）
+send_serverchan_notification() {
+    local title="$1"
+    local message="$2"
+    
+    [[ -z "$SERVERCHAN_SENDKEY" ]] && return 1
+    
+    # Server酱 API 调用
+    local response=$(curl -s -X POST \
+        -H "Content-Type: application/json" \
+        -d "{\"title\":\"$title\",\"desp\":\"$message\"}" \
+        "https://sctapi.ftqq.com/$SERVERCHAN_SENDKEY.send")
+    
+    # 检查返回结果
+    if echo "$response" | grep -q '"code":0'; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 # 主要通知函数
 send_notification() {
     local title="${1:-$NOTIFICATION_TITLE}"
@@ -171,11 +192,35 @@ send_notification() {
     # 发送 macOS 通知
     send_macos_notification "$title" "$message" "$NOTIFICATION_SOUND"
     
-    # 尝试发送 Apple Watch 通知
-    if send_pushover_notification "$title" "$message"; then
-        log_info "Apple Watch 通知发送成功"
-    else
-        log_info "Apple Watch 通知未配置或发送失败"
+    # 发送远程通知（根据配置选择模式）
+    local serverchan_sent=false
+    local pushover_sent=false
+    local any_remote_sent=false
+    
+    # Server酱 通知
+    if [[ "$ENABLE_SERVERCHAN" == "true" ]] && send_serverchan_notification "$title" "$message"; then
+        log_info "Server酱 通知发送成功"
+        serverchan_sent=true
+        any_remote_sent=true
+    fi
+    
+    # Pushover 通知
+    if [[ "$ENABLE_PUSHOVER" == "true" ]]; then
+        # 并行模式：总是尝试发送；优先级模式：仅在前面失败时发送
+        if [[ "$ENABLE_PARALLEL_PUSH" == "true" ]] || [[ "$serverchan_sent" == "false" ]]; then
+            if send_pushover_notification "$title" "$message"; then
+                log_info "Pushover 通知发送成功"
+                pushover_sent=true
+                any_remote_sent=true
+            fi
+        fi
+    fi
+    
+    # 记录发送结果
+    if [[ "$any_remote_sent" == "false" ]]; then
+        log_info "远程通知未配置或发送失败"
+    elif [[ "$ENABLE_PARALLEL_PUSH" == "true" ]]; then
+        log_info "并行推送模式 - Server酱:$serverchan_sent, Pushover:$pushover_sent"
     fi
 }
 
@@ -250,10 +295,30 @@ show_status() {
         echo "  ❌ 无可用通知工具"
     fi
     
-    if [[ -n "$PUSHOVER_TOKEN" && -n "$PUSHOVER_USER" ]]; then
-        echo "  ✅ Pushover (Apple Watch)"
+    echo ""
+    echo "远程推送:"
+    echo "  推送模式: $([ "$ENABLE_PARALLEL_PUSH" == "true" ] && echo "并行发送" || echo "优先级模式")"
+    
+    # Server酱 状态
+    if [[ "$ENABLE_SERVERCHAN" == "true" ]]; then
+        if [[ -n "$SERVERCHAN_SENDKEY" ]]; then
+            echo "  ✅ Server酱 (已启用，已配置)"
+        else
+            echo "  ⚠️ Server酱 (已启用，未配置)"
+        fi
     else
-        echo "  ⚠️ Pushover 未配置"
+        echo "  ❌ Server酱 (已禁用)"
+    fi
+    
+    # Pushover 状态
+    if [[ "$ENABLE_PUSHOVER" == "true" ]]; then
+        if [[ -n "$PUSHOVER_TOKEN" && -n "$PUSHOVER_USER" ]]; then
+            echo "  ✅ Pushover (已启用，已配置)"
+        else
+            echo "  ⚠️ Pushover (已启用，未配置)"
+        fi
+    else
+        echo "  ❌ Pushover (已禁用)"
     fi
 }
 
