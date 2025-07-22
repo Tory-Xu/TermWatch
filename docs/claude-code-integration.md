@@ -189,12 +189,11 @@ notify_success "多渠道推送测试"
 | `Notification` | Claude 发送系统通知时 | 原始通知消息 | ⚠️ 少见触发 |
 | `Stop` | Claude 完成主要任务/会话时 | "Claude Code 任务已完成" | ⚠️ 需要完全退出 |
 | `SubagentStop` | Claude 子任务完成时 | "Claude Code 任务已完成" | ⚠️ 子任务触发 |
-| `PostToolUse` | 使用指定工具后 | "Claude Code 任务已完成" | ✅ **推荐使用** |
 
 **重要说明**：
 - **Stop钩子**：只在Claude会话完全结束时触发，不是每次回答后都触发
-- **PostToolUse钩子**：更可靠，可以配置监听常用工具（如TodoWrite、Bash、Edit等）
-- **建议配置**：使用PostToolUse钩子作为主要通知方式，Stop钩子作为备用
+- **SubagentStop钩子**：在子任务完成时触发，相对更频繁
+- **Notification钩子**：系统通知时触发，较为少见
 
 ## 故障排除
 
@@ -206,7 +205,7 @@ notify_success "多渠道推送测试"
 - **重新启动 Claude Code**（最重要）
 - 检查 `~/.claude/settings.json` 语法是否正确：`python3 -m json.tool ~/.claude/settings.json`
 - 使用 `claude --debug` 查看钩子执行日志
-- **Stop钩子特殊情况**：只在会话完全结束时触发，建议使用PostToolUse钩子进行测试
+- **Stop钩子特殊情况**：只在会话完全结束时触发，可以使用SubagentStop钩子进行测试
 
 ### 1.1 钩子配置加载问题
 
@@ -284,47 +283,22 @@ chmod +x ~/.claude/hooks/stop.sh
 
 ## 高级配置
 
-### 推荐的PostToolUse钩子配置
-
-基于实际测试，以下是更实用的钩子配置：
-
-```json
-"PostToolUse": [
-  {
-    "matcher": "Bash|Write|Edit|MultiEdit",
-    "hooks": [
-      {
-        "type": "command",
-        "command": "~/.claude/hooks/stop.sh"
-      }
-    ]
-  }
-]
-```
-
-这个配置会在Claude执行以下操作后发送通知：
-- `Bash` - 运行命令行工具
-- `Write` - 创建新文件
-- `Edit` - 编辑文件
-- `MultiEdit` - 批量编辑文件
-
 ### 自定义通知消息
 
-可以修改钩子脚本中的通知内容：
+根据不同操作类型发送不同消息：
 
 ```bash
-# 在 ~/.claude/hooks/stop.sh 中自定义消息
-"$TERMWATCH_SCRIPT" success "🎉 Claude 已完成你的请求！"
-```
+# 在 ~/.claude/hooks/stop.sh 中添加智能判断
+COMMAND="$1"
 
-### 添加条件过滤
-
-可以为特定类型的任务添加条件判断：
-
-```bash
-# 示例：只在特定条件下发送通知
-if [[ "$message" == *"构建"* ]]; then
-    "$TERMWATCH_SCRIPT" success "$message"
+if [[ $COMMAND =~ git.*push ]]; then
+    "$TERMWATCH_SCRIPT" success "🚀 代码已推送到远程仓库"
+elif [[ $COMMAND =~ (test|pytest) ]]; then
+    "$TERMWATCH_SCRIPT" success "✅ 测试执行完成"
+elif [[ $COMMAND =~ (build|make) ]]; then
+    "$TERMWATCH_SCRIPT" success "🔨 构建任务完成"
+else
+    "$TERMWATCH_SCRIPT" success "🎉 Claude 已完成你的请求！"
 fi
 ```
 
@@ -360,7 +334,7 @@ echo "$CURRENT_TIME" > "$LAST_NOTIFY_FILE"
 
 ## 最佳实践
 
-1. **优先使用PostToolUse钩子**：比Stop钩子更可靠和实用
+1. **合理选择钩子类型**：根据需要选择合适的钩子类型
 2. **定期测试**：定期测试通知功能确保正常工作
 3. **备份配置**：备份 `~/.claude/settings.json` 配置文件
 4. **监控日志**：使用 `claude --debug` 监控钩子执行状态
@@ -373,7 +347,6 @@ echo "$CURRENT_TIME" > "$LAST_NOTIFY_FILE"
 **经过实际验证，以下配置已确认可用**：
 
 ### ✅ 已验证工作的配置
-- **PostToolUse钩子**：监听TodoWrite工具，成功触发通知
 - **TermWatch集成**：macOS系统通知正常工作
 - **Server酱集成**：微信推送成功发送
 - **Pushover集成**：Apple Watch通知成功发送
@@ -384,19 +357,19 @@ echo "$CURRENT_TIME" > "$LAST_NOTIFY_FILE"
 ### ⚠️ 需要注意的问题
 - **Stop钩子**：只在会话完全结束时触发，实用性有限
 - **配置加载**：修改钩子配置后必须重启Claude Code才能生效
-- **触发频率**：PostToolUse钩子可能频繁触发，建议添加频率控制
+- **SubagentStop钩子**：在子任务完成时触发，相对更频繁但仍然有限
 
 ## 结论
 
 通过配置 Claude Code 钩子与 TermWatch 的集成，你可以：
 
-- ✅ **实时收到任务完成通知**（通过PostToolUse钩子验证）
+- ✅ **实时收到任务完成通知**（通过Stop和SubagentStop钩子）
 - ✅ **多平台推送通知**：macOS + 微信 + Apple Watch（已测试可用）
 - ✅ **统一的钩子脚本管理**（hooks目录集中管理）
 - ✅ **自定义通知内容和触发条件**
 - ✅ **灵活的钩子配置系统**
 
-**推荐配置**：使用PostToolUse钩子监听常用工具（Bash、Write、Edit等），这比Stop钩子更实用和可靠。
+**推荐配置**：根据需要使用Stop、SubagentStop和Notification钩子，Stop钩子在会话结束时触发，SubagentStop在子任务完成时触发。
 
 配置完成后，重新启动 Claude Code 即可享受智能通知功能！
 

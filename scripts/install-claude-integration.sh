@@ -247,17 +247,6 @@ configure_claude_hooks() {
           }
         ]
       }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "TodoWrite",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "'$HOME'/.claude/hooks/stop.sh"
-          }
-        ]
-      }
     ]
   }
 }'
