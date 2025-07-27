@@ -2,7 +2,7 @@
 
 ## 概述
 
-本教程将指导你如何配置 Claude Code 钩子系统，使其能够通过 TermWatch 向 macOS 和 Apple Watch 发送通知。当 Claude Code 等待输入或完成任务时，你将收到及时的通知提醒。
+本教程将指导你如何配置 Claude Code 钩子系统，使其能够通过 TermWatch 向 macOS、iPhone 和 Apple Watch 发送通知。当 Claude Code 等待输入或完成任务时，你将收到及时的通知提醒。
 
 ## 系统要求
 
@@ -10,7 +10,7 @@
 - Claude Code 1.0.51 或更高版本
 - TermWatch 项目（已安装）
 - terminal-notifier（推荐）或系统内置 osascript
-- 可选：Pushover 账号（用于 Apple Watch 通知）
+- 可选：Bark 应用（用于 iPhone/Apple Watch 通知）
 
 ## 前置准备
 

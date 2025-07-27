@@ -61,16 +61,16 @@ check_dependencies() {
 
 # 创建钩子目录
 create_hooks_directory() {
-    log_info "创建 Claude Code 钩子目录..."
-    mkdir -p ~/.claude/hooks
-    log_success "钩子目录已创建"
+    log_info "创建 TermWatch 专用钩子目录..."
+    mkdir -p ~/.claude/hooks/termwatch
+    log_success "TermWatch 钩子目录已创建: ~/.claude/hooks/termwatch"
 }
 
 # 创建通知钩子脚本
 create_notify_hook() {
     log_info "创建通知钩子脚本..."
     
-    cat > ~/.claude/hooks/notify.sh << 'EOF'
+    cat > ~/.claude/hooks/termwatch/notify.sh << 'EOF'
 #!/bin/bash
 
 # Claude Code 通知钩子脚本
@@ -88,19 +88,28 @@ title=$(echo "$input" | jq -r '.title // "Claude Code"')
 
 # 发送通知到 TermWatch
 if [[ -f ~/.termwatch/termwatch.sh ]]; then
-    bash ~/.termwatch/termwatch.sh info "$message"
+    bash ~/.termwatch/termwatch.sh info "$message" 2>/dev/null || {
+        echo "警告: TermWatch 通知发送失败" >&2
+    }
+elif command -v termwatch >/dev/null 2>&1; then
+    termwatch info "$message" 2>/dev/null || {
+        echo "警告: TermWatch 通知发送失败" >&2
+    }
 else
-    echo "错误: TermWatch 未找到" >&2
-    exit 1
+    echo "信息: TermWatch 未安装，跳过通知" >&2
 fi
 
 # 记录日志
-echo "通知已发送: $title - $message" >&2
+if [[ -f ~/.termwatch/termwatch.sh ]] || command -v termwatch >/dev/null 2>&1; then
+    echo "通知已发送: $title - $message" >&2
+else
+    echo "通知钩子执行完毕: $title - $message（未发送通知）" >&2
+fi
 
 exit 0
 EOF
 
-    chmod +x ~/.claude/hooks/notify.sh
+    chmod +x ~/.claude/hooks/termwatch/notify.sh
     log_success "通知钩子脚本已创建"
 }
 
@@ -108,7 +117,7 @@ EOF
 create_stop_hook() {
     log_info "创建任务完成钩子脚本..."
     
-    cat > ~/.claude/hooks/stop.sh << 'EOF'
+    cat > ~/.claude/hooks/termwatch/stop.sh << 'EOF'
 #!/bin/bash
 
 # Claude Code Stop 钩子脚本
@@ -130,19 +139,28 @@ fi
 
 # 发送任务完成通知
 if [[ -f ~/.termwatch/termwatch.sh ]]; then
-    bash ~/.termwatch/termwatch.sh success "Claude Code 任务已完成"
+    bash ~/.termwatch/termwatch.sh success "Claude Code 任务已完成" 2>/dev/null || {
+        echo "警告: TermWatch 通知发送失败" >&2
+    }
+elif command -v termwatch >/dev/null 2>&1; then
+    termwatch success "Claude Code 任务已完成" 2>/dev/null || {
+        echo "警告: TermWatch 通知发送失败" >&2
+    }
 else
-    echo "错误: TermWatch 未找到" >&2
-    exit 1
+    echo "信息: TermWatch 未安装，跳过通知" >&2
 fi
 
 # 记录日志
-echo "任务完成通知已发送" >&2
+if [[ -f ~/.termwatch/termwatch.sh ]] || command -v termwatch >/dev/null 2>&1; then
+    echo "任务完成通知已发送" >&2
+else
+    echo "任务完成钩子执行完毕（未发送通知）" >&2
+fi
 
 exit 0
 EOF
 
-    chmod +x ~/.claude/hooks/stop.sh
+    chmod +x ~/.claude/hooks/termwatch/stop.sh
     log_success "任务完成钩子脚本已创建"
 }
 
@@ -150,7 +168,7 @@ EOF
 create_hooks_readme() {
     log_info "创建钩子目录说明文档..."
     
-    cat > ~/.claude/hooks/README.md << 'EOF'
+    cat > ~/.claude/hooks/termwatch/README.md << 'EOF'
 # Claude Code 钩子脚本目录
 
 此目录包含Claude Code的钩子脚本，用于扩展Claude的功能。
@@ -160,7 +178,7 @@ create_hooks_readme() {
 ### notify.sh
 - **用途**: 处理Claude的通知事件
 - **触发时机**: 当Claude发送系统通知时
-- **功能**: 通过TermWatch发送信息类型通知到macOS、微信(Server酱)、Apple Watch
+- **功能**: 通过TermWatch发送信息类型通知到macOS、iPhone、Apple Watch
 
 ### stop.sh  
 - **用途**: 处理Claude的任务完成事件
@@ -171,8 +189,8 @@ create_hooks_readme() {
 
 钩子脚本通过TermWatch支持以下推送渠道：
 - 📱 macOS 系统通知
-- 💬 微信 (Server酱)
-- ⌚ Apple Watch (Pushover)
+- 🍎 iOS/Apple Watch (Bark) - 推荐
+- 💬 微信 (Server酱) - 备选
 
 ## 配置文件
 
@@ -207,6 +225,49 @@ backup_claude_config() {
     fi
 }
 
+# 迁移现有钩子到新目录
+migrate_existing_hooks() {
+    log_info "检查并迁移现有钩子..."
+    
+    local old_notify="$HOME/.claude/hooks/notify.sh"
+    local old_stop="$HOME/.claude/hooks/stop.sh"
+    local old_readme="$HOME/.claude/hooks/README.md"
+    
+    local new_notify="$HOME/.claude/hooks/termwatch/notify.sh"
+    local new_stop="$HOME/.claude/hooks/termwatch/stop.sh"
+    local new_readme="$HOME/.claude/hooks/termwatch/README.md"
+    
+    local migrated=false
+    
+    # 迁移 notify.sh
+    if [[ -f "$old_notify" ]] && [[ ! -f "$new_notify" ]]; then
+        log_info "迁移现有通知钩子..."
+        mv "$old_notify" "$new_notify" 2>/dev/null || cp "$old_notify" "$new_notify"
+        migrated=true
+    fi
+    
+    # 迁移 stop.sh
+    if [[ -f "$old_stop" ]] && [[ ! -f "$new_stop" ]]; then
+        log_info "迁移现有停止钩子..."
+        mv "$old_stop" "$new_stop" 2>/dev/null || cp "$old_stop" "$new_stop"
+        migrated=true
+    fi
+    
+    # 迁移 README.md
+    if [[ -f "$old_readme" ]] && [[ ! -f "$new_readme" ]]; then
+        log_info "迁移现有说明文档..."
+        mv "$old_readme" "$new_readme" 2>/dev/null || cp "$old_readme" "$new_readme"
+        migrated=true
+    fi
+    
+    if [[ "$migrated" == "true" ]]; then
+        log_success "现有钩子已迁移到 ~/.claude/hooks/termwatch/"
+        log_warning "请重启 Claude Code 以使新的钩子路径生效"
+    else
+        log_info "无现有钩子需要迁移"
+    fi
+}
+
 # 配置 Claude Code 钩子
 configure_claude_hooks() {
     log_info "配置 Claude Code 钩子..."
@@ -221,7 +282,7 @@ configure_claude_hooks() {
         "hooks": [
           {
             "type": "command",
-            "command": "'$HOME'/.claude/hooks/notify.sh"
+            "command": "'$HOME'/.claude/hooks/termwatch/notify.sh"
           }
         ]
       }
@@ -232,7 +293,7 @@ configure_claude_hooks() {
         "hooks": [
           {
             "type": "command",
-            "command": "'$HOME'/.claude/hooks/stop.sh"
+            "command": "'$HOME'/.claude/hooks/termwatch/stop.sh"
           }
         ]
       }
@@ -243,7 +304,7 @@ configure_claude_hooks() {
         "hooks": [
           {
             "type": "command",
-            "command": "'$HOME'/.claude/hooks/stop.sh"
+            "command": "'$HOME'/.claude/hooks/termwatch/stop.sh"
           }
         ]
       }
@@ -269,7 +330,7 @@ test_hooks() {
     
     # 测试通知钩子
     log_info "测试通知钩子..."
-    if echo '{"session_id": "install_test", "message": "Claude Code 集成测试", "title": "安装脚本"}' | ~/.claude/hooks/notify.sh; then
+    if echo '{"session_id": "install_test", "message": "Claude Code 集成测试", "title": "安装脚本"}' | ~/.claude/hooks/termwatch/notify.sh; then
         log_success "通知钩子测试成功"
     else
         log_error "通知钩子测试失败"
@@ -278,7 +339,7 @@ test_hooks() {
     
     # 测试任务完成钩子
     log_info "测试任务完成钩子..."
-    if echo '{"session_id": "install_test", "stop_hook_active": false}' | ~/.claude/hooks/stop.sh; then
+    if echo '{"session_id": "install_test", "stop_hook_active": false}' | ~/.claude/hooks/termwatch/stop.sh; then
         log_success "任务完成钩子测试成功"
     else
         log_error "任务完成钩子测试失败"
@@ -301,13 +362,13 @@ show_completion_info() {
     echo "  1. 重启 Claude Code 以加载新的钩子配置"
     echo "  2. 在新的 Claude 会话中测试通知功能"
     echo "  3. 如需配置远程推送，请参考："
-    echo "     - Server酱（微信）：https://sct.ftqq.com/"
-    echo "     - Pushover（Apple Watch）：https://pushover.net/"
+    echo "     - Bark（iOS/Apple Watch）：bash scripts/configure-bark.sh"
+    echo "     - Server酱（微信）：bash scripts/configure-serverchan.sh"
     echo
     echo -e "${BLUE}钩子脚本位置：${NC}"
-    echo "  ~/.claude/hooks/notify.sh"
-    echo "  ~/.claude/hooks/stop.sh"
-    echo "  ~/.claude/hooks/README.md"
+    echo "  ~/.claude/hooks/termwatch/notify.sh"
+    echo "  ~/.claude/hooks/termwatch/stop.sh"
+    echo "  ~/.claude/hooks/termwatch/README.md"
     echo
     echo -e "${BLUE}配置文件位置：${NC}"
     echo "  ~/.claude/settings.json"
@@ -332,6 +393,7 @@ EOF
     check_dependencies
     backup_claude_config
     create_hooks_directory
+    migrate_existing_hooks
     create_notify_hook
     create_stop_hook
     create_hooks_readme
