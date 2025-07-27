@@ -131,22 +131,6 @@ send_macos_notification() {
     fi
 }
 
-# 发送 Pushover 通知（Apple Watch）
-send_pushover_notification() {
-    local title="$1"
-    local message="$2"
-    
-    [[ -z "$PUSHOVER_TOKEN" || -z "$PUSHOVER_USER" ]] && return 1
-    
-    curl -s \
-        --form-string "token=$PUSHOVER_TOKEN" \
-        --form-string "user=$PUSHOVER_USER" \
-        --form-string "title=$title" \
-        --form-string "message=$message" \
-        --form-string "priority=1" \
-        --form-string "sound=pushover" \
-        https://api.pushover.net/1/messages.json >/dev/null 2>&1
-}
 
 # 发送 Server酱 通知（微信推送）
 send_serverchan_notification() {
@@ -249,7 +233,6 @@ send_notification() {
     
     # 发送远程通知（根据配置选择模式）
     local serverchan_sent=false
-    local pushover_sent=false
     local bark_sent=false
     local any_remote_sent=false
     
@@ -260,22 +243,10 @@ send_notification() {
         any_remote_sent=true
     fi
     
-    # Pushover 通知
-    if [[ "$ENABLE_PUSHOVER" == "true" ]]; then
-        # 并行模式：总是尝试发送；优先级模式：仅在前面失败时发送
-        if [[ "$ENABLE_PARALLEL_PUSH" == "true" ]] || [[ "$serverchan_sent" == "false" ]]; then
-            if send_pushover_notification "$title" "$message"; then
-                log_info "Pushover 通知发送成功"
-                pushover_sent=true
-                any_remote_sent=true
-            fi
-        fi
-    fi
-    
     # Bark 通知
     if [[ "$ENABLE_BARK" == "true" ]]; then
         # 并行模式：总是尝试发送；优先级模式：仅在前面失败时发送
-        if [[ "$ENABLE_PARALLEL_PUSH" == "true" ]] || [[ "$serverchan_sent" == "false" && "$pushover_sent" == "false" ]]; then
+        if [[ "$ENABLE_PARALLEL_PUSH" == "true" ]] || [[ "$serverchan_sent" == "false" ]]; then
             if send_bark_notification "$title" "$message" "$type"; then
                 log_info "Bark 通知发送成功"
                 bark_sent=true
@@ -288,7 +259,7 @@ send_notification() {
     if [[ "$any_remote_sent" == "false" ]]; then
         log_info "远程通知未配置或发送失败"
     elif [[ "$ENABLE_PARALLEL_PUSH" == "true" ]]; then
-        log_info "并行推送模式 - Server酱:$serverchan_sent, Pushover:$pushover_sent, Bark:$bark_sent"
+        log_info "并行推送模式 - Server酱:$serverchan_sent, Bark:$bark_sent"
     fi
 }
 
@@ -376,17 +347,6 @@ show_status() {
         fi
     else
         echo "  ❌ Server酱 (已禁用)"
-    fi
-    
-    # Pushover 状态
-    if [[ "$ENABLE_PUSHOVER" == "true" ]]; then
-        if [[ -n "$PUSHOVER_TOKEN" && -n "$PUSHOVER_USER" ]]; then
-            echo "  ✅ Pushover (已启用，已配置)"
-        else
-            echo "  ⚠️ Pushover (已启用，未配置)"
-        fi
-    else
-        echo "  ❌ Pushover (已禁用)"
     fi
     
     # Bark 状态

@@ -65,16 +65,47 @@ npm run build || notify_error "构建失败，请检查日志"
 
 ## 📱 手机和 Apple Watch 通知设置
 
-TermWatch 支持三种远程推送服务，可以将通知发送到手机和 Apple Watch：
+TermWatch 支持两种远程推送服务，可以将通知发送到手机和 Apple Watch：
 
-### 🚀 Server酱（推荐）- 免费微信推送
+### 📱 Bark（强烈推荐）- iOS 原生推送
+
+**优势：**
+- ✅ **完全免费且开源**
+- 📱 **完美支持 iPhone 和 Apple Watch**
+- 🎯 **支持多种通知级别和声音**
+- 🔐 **支持自建服务器保护隐私**
+- 🏎️ **响应速度快，通知样式丰富**
+- ⚙️ **配置简单，无需注册账号**
+
+**设置步骤：**
+
+1. **安装 Bark 应用**
+   - 从 App Store 下载 [Bark](https://apps.apple.com/app/bark-custom-notifications/id1403753865) 应用
+   - 打开应用获取推送 Key
+
+2. **配置 TermWatch**
+   ```bash
+   # 运行配置脚本（推荐）
+   bash scripts/configure-bark.sh
+   
+   # 或手动配置
+   nano ~/.termwatch/config/user.conf
+   ```
+
+3. **测试通知**
+   ```bash
+   bash src/termwatch.sh --test
+   ```
+
+### 🚀 Server酱（备选）- 免费微信推送
+
+**适合场景：** 已有微信，希望通过微信接收通知
 
 **优势：**
 - ✅ 完全免费（每日1000条消息）
 - 📱 直接推送到微信
 - ⌚ 支持 Apple Watch（通过微信）
 - 🇨🇳 国内网络稳定
-- 🚀 响应速度快
 
 **设置步骤：**
 
@@ -98,53 +129,6 @@ TermWatch 支持三种远程推送服务，可以将通知发送到手机和 App
    bash src/termwatch.sh --test
    ```
 
-### 📱 Bark（推荐）- iOS 原生推送
-
-**优势：**
-- ✅ 免费且开源
-- 📱 支持 iPhone 和 Apple Watch
-- 🎯 支持多种通知级别和声音
-- 🔐 支持自建服务器保护隐私
-- 🏎️ 响应速度快，通知样式丰富
-
-**设置步骤：**
-
-1. **安装 Bark 应用**
-   - 从 App Store 下载 [Bark](https://apps.apple.com/app/bark-custom-notifications/id1403753865) 应用
-   - 打开应用获取推送 Key
-
-2. **配置 TermWatch**
-   ```bash
-   # 运行配置脚本
-   bash scripts/configure-bark.sh
-   
-   # 或手动配置
-   nano ~/.termwatch/config/user.conf
-   ```
-
-3. **测试通知**
-   ```bash
-   bash src/termwatch.sh --test
-   ```
-
-### 📡 Pushover（备选）- Apple Watch 专用推送
-
-**适合场景：** 需要国际化推送或独立于微信的通知服务
-
-**设置步骤：**
-
-1. **注册 Pushover 账号**
-   - 访问 [pushover.net](https://pushover.net/) 注册账号
-   - 下载 iPhone 应用并登录
-
-2. **配置 TermWatch**
-   ```bash
-   # 运行配置脚本
-   bash scripts/configure-pushover.sh
-   
-   # 或手动配置
-   nano ~/.termwatch/config/user.conf
-   ```
 
 ### 🎛️ 多服务控制
 
@@ -153,22 +137,20 @@ TermWatch 支持精细化的推送服务控制：
 **配置选项：**
 ```bash
 # 推送服务开关（可独立控制每个服务）
+ENABLE_BARK=true           # 是否启用 Bark 推送（推荐）
 ENABLE_SERVERCHAN=true     # 是否启用 Server酱 推送
-ENABLE_PUSHOVER=true       # 是否启用 Pushover 推送
-ENABLE_BARK=true           # 是否启用 Bark 推送
 ENABLE_PARALLEL_PUSH=false # 推送模式选择
 ```
 
 **推送模式：**
-- **优先级模式** (`ENABLE_PARALLEL_PUSH=false`): 优先使用 Server酱，失败时依次尝试 Bark 和 Pushover
+- **优先级模式** (`ENABLE_PARALLEL_PUSH=false`): 优先使用 Bark，失败时尝试 Server酱
 - **并行模式** (`ENABLE_PARALLEL_PUSH=true`): 同时发送到所有启用的服务
 
 **使用场景：**
-- 只用微信：`ENABLE_SERVERCHAN=true, ENABLE_PUSHOVER=false, ENABLE_BARK=false`
-- 只用 Bark：`ENABLE_SERVERCHAN=false, ENABLE_PUSHOVER=false, ENABLE_BARK=true`
-- 只用 Pushover：`ENABLE_SERVERCHAN=false, ENABLE_PUSHOVER=true, ENABLE_BARK=false`
-- 多重保障：`ENABLE_PARALLEL_PUSH=true` 同时发送到所有启用的服务
-- 智能备份：`ENABLE_PARALLEL_PUSH=false` 主用 Server酱，备用 Bark 和 Pushover
+- **只用 Bark（推荐）**：`ENABLE_BARK=true, ENABLE_SERVERCHAN=false`
+- **只用微信**：`ENABLE_BARK=false, ENABLE_SERVERCHAN=true`
+- **双重保障**：`ENABLE_PARALLEL_PUSH=true` 同时发送到两个服务
+- **智能备份**：`ENABLE_PARALLEL_PUSH=false` 主用 Bark，备用 Server酱
 
 ## ⚙️ 配置选项
 
@@ -247,9 +229,8 @@ TermWatch/
 │   ├── default.conf            # 默认配置
 │   └── user.conf.example       # 用户配置示例
 ├── scripts/
-│   ├── configure-pushover.sh   # Pushover 配置脚本
+│   ├── configure-bark.sh       # Bark 配置脚本（推荐）
 │   ├── configure-serverchan.sh # Server酱配置脚本
-│   ├── configure-bark.sh       # Bark 配置脚本
 │   ├── test-notification.sh    # 通知测试脚本
 │   └── uninstall.sh           # 卸载脚本
 └── docs/
@@ -297,10 +278,15 @@ TermWatch 已完美集成到 [Claude Code](https://docs.anthropic.com/en/docs/cl
 
 ### Apple Watch 收不到通知
 
-1. 确保 Pushover 正确配置
-2. 检查 iPhone 上的 Pushover 应用是否已登录
-3. 确认 Apple Watch 通知设置：
-   - iPhone: Watch 应用 > 通知 > Pushover > 允许通知
+1. **Bark 用户**：
+   - 确保 Bark 正确配置
+   - 检查 iPhone 上的 Bark 应用是否正常
+   - 确认 Apple Watch 通知设置：
+     - iPhone: Watch 应用 > 通知 > Bark > 允许通知
+
+2. **Server酱 用户**：
+   - 确保微信通知已开启
+   - 确认 Apple Watch 微信通知设置
 
 ### 配置问题
 
