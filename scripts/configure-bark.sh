@@ -51,8 +51,8 @@ echo "   2. 进入 [服务器] > [☁️] 进入 \"服务器列表\""
 echo "   3. 点击服务后选择 \"复制地址和Key\""
 echo "   4. 从 https://api.day.app/{Key}/ 格式的 URL 中提取 Key"
 echo ""
-echo "   示例: https://api.day.app/a3bG27ELJkkTi3gqMWiRGi/"
-echo "   Key 就是: a3bG27ELJkkTi3gqMWiRGi"
+echo "   示例: https://api.day.app/YOUR_BARK_KEY_HERE/"
+echo "   Key 就是: YOUR_BARK_KEY_HERE"
 echo ""
 
 while true; do
