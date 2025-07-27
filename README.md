@@ -350,12 +350,17 @@ TermWatch 卸载程序提供了安全、完整的清理功能：
   - `termwatch` 命令别名
   - `notify` 系列别名 (`notify`, `notify_success`, `notify_error`, `notify_warning`, `notify_info`)
   - 其他包含 `termwatch`/`TermWatch` 的配置行
+- 🤖 **Claude Code 钩子集成** (可选，需用户确认)：
+  - `~/.claude/hooks/termwatch/` 钩子目录和脚本
+  - `~/.claude/settings.json` 中的 TermWatch 钩子配置
+  - Claude 配置备份文件清理
 - 🔗 **符号链接**: 清理可能的系统链接
 - 🗂️ **日志缓存**: 删除所有运行日志和缓存文件
 
 **安全保障措施：**
-- ✅ **自动备份**: 修改任何 Shell 配置文件前自动创建带时间戳的备份
-- ✅ **精确清理**: 只移除 TermWatch 相关配置，不影响其他设置
+- ✅ **自动备份**: 修改任何配置文件前自动创建带时间戳的备份
+- ✅ **精确清理**: 只移除 TermWatch 相关配置，不影响其他设置  
+- ✅ **用户确认**: Claude Code 钩子清理需要用户明确确认
 - ✅ **保留系统工具**: `terminal-notifier` 等系统工具保持完整
 - ✅ **权限不变**: 系统通知权限设置完全不受影响
 
@@ -364,16 +369,47 @@ TermWatch 卸载程序提供了安全、完整的清理功能：
 # 重启终端或重新加载配置
 source ~/.zshrc     # 或 ~/.bash_profile
 
+# 如果清理了 Claude Code 钩子，请重启 Claude Code
 # 验证卸载完成
 command -v termwatch  # 应该显示 "not found"
 ```
 
 **恢复配置（如果需要）：**
 ```bash
+# Shell 配置恢复
 # 备份文件位置: 原文件名.termwatch_backup_时间戳
 # 例如: ~/.zshrc.termwatch_backup_20240127_143052
 cp ~/.zshrc.termwatch_backup_20240127_143052 ~/.zshrc
 source ~/.zshrc
+
+# Claude Code 钩子恢复
+# 备份位置: ~/.claude/hooks/termwatch_backup_时间戳
+cp -r ~/.claude/hooks/termwatch_backup_20240127_143052 ~/.claude/hooks/termwatch
+# 然后重启 Claude Code
+```
+
+### 🤖 Claude Code 钩子集成说明
+
+如果你安装了 [Claude Code 集成](docs/claude-code-integration.md)，卸载程序会检测并提供清理选项：
+
+**交互式清理过程：**
+1. **钩子目录清理**: 询问是否删除 `~/.claude/hooks/termwatch/` 
+2. **配置文件清理**: 询问是否清理 `~/.claude/settings.json` 中的钩子设置
+3. **备份文件清理**: 询问是否删除旧的 Claude 配置备份
+
+**注意事项：**
+- 清理 Claude 钩子会影响 Claude Code 的通知功能
+- 所有清理操作都会先创建备份
+- 可以选择性保留某些组件
+- 需要重启 Claude Code 使更改生效
+
+**手动清理方法（如果需要）：**
+```bash
+# 手动删除钩子目录
+rm -rf ~/.claude/hooks/termwatch
+
+# 手动编辑 Claude 配置（移除 TermWatch 相关的 hooks 配置）
+nano ~/.claude/settings.json
 ```
 
 更多故障排除信息请查看 [troubleshooting.md](docs/troubleshooting.md)

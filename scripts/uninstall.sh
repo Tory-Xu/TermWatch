@@ -36,6 +36,10 @@ show_uninstall_info() {
     echo "      • termwatch 命令别名"
     echo "      • notify 系列别名 (notify, notify_success, notify_error, notify_warning, notify_info)"
     echo "      • 其他包含 termwatch/TermWatch 的配置行"
+    echo "  🤖 Claude Code 钩子集成:"
+    echo "      • ~/.claude/hooks/termwatch/ 钩子目录"
+    echo "      • ~/.claude/settings.json 中的钩子配置"
+    echo "      • Claude 配置备份文件"
     echo "  🗂️ 日志和缓存文件"
     echo "  🔗 可能的符号链接"
     echo
@@ -155,6 +159,118 @@ clean_shell_config() {
     done
 }
 
+# 清理 Claude Code 钩子集成
+clean_claude_hooks() {
+    log_info "清理 Claude Code 钩子集成..."
+    
+    # 检查是否存在 Claude 目录
+    if [[ ! -d "$HOME/.claude" ]]; then
+        log_info "未发现 Claude Code 配置目录，跳过钩子清理"
+        return 0
+    fi
+    
+    local claude_hooks_dir="$HOME/.claude/hooks/termwatch"
+    local claude_settings="$HOME/.claude/settings.json"
+    local cleaned_items=0
+    
+    # 清理 TermWatch 钩子目录
+    if [[ -d "$claude_hooks_dir" ]]; then
+        log_info "发现 TermWatch 钩子目录: $claude_hooks_dir"
+        
+        # 询问用户确认
+        read -p "是否删除 Claude Code 钩子集成? 这会影响 Claude 的通知功能 (y/N): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            # 备份钩子目录
+            local backup_dir="$HOME/.claude/hooks/termwatch_backup_$(date +%Y%m%d_%H%M%S)"
+            cp -r "$claude_hooks_dir" "$backup_dir"
+            log_info "钩子目录已备份到: $backup_dir"
+            
+            # 删除钩子目录
+            rm -rf "$claude_hooks_dir"
+            log_info "已删除 TermWatch 钩子目录"
+            ((cleaned_items++))
+            
+            # 如果 hooks 目录为空，也删除它
+            if [[ -d "$HOME/.claude/hooks" ]] && [[ -z "$(ls -A "$HOME/.claude/hooks")" ]]; then
+                rmdir "$HOME/.claude/hooks"
+                log_info "已删除空的钩子目录: ~/.claude/hooks"
+            fi
+        else
+            log_info "保留 Claude Code 钩子集成"
+        fi
+    fi
+    
+    # 清理 Claude 配置文件中的钩子设置
+    if [[ -f "$claude_settings" ]]; then
+        # 检查是否包含 TermWatch 钩子配置
+        if grep -q "termwatch" "$claude_settings" 2>/dev/null; then
+            log_info "发现 Claude 配置文件中的 TermWatch 钩子设置"
+            
+            read -p "是否清理 Claude 配置文件中的 TermWatch 钩子设置? (y/N): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                # 备份配置文件
+                cp "$claude_settings" "${claude_settings}.termwatch_backup_$(date +%Y%m%d_%H%M%S)"
+                log_info "Claude 配置已备份"
+                
+                # 检查是否安装了 jq
+                if command -v jq >/dev/null 2>&1; then
+                    # 使用 jq 移除 TermWatch 相关的钩子配置
+                    local temp_file=$(mktemp)
+                    
+                    # 移除包含 termwatch 路径的钩子配置
+                    jq '
+                        if .hooks then
+                            .hooks = (.hooks | to_entries | map(
+                                .value = [.value[] | select(
+                                    .hooks // [] | map(.command // "" | test("termwatch") | not) | all
+                                )] | select(length > 0)
+                            ) | from_entries)
+                        else . end
+                    ' "$claude_settings" > "$temp_file" 2>/dev/null
+                    
+                    if [[ $? -eq 0 ]] && [[ -s "$temp_file" ]]; then
+                        mv "$temp_file" "$claude_settings"
+                        log_info "已清理 Claude 配置文件中的 TermWatch 钩子设置"
+                        ((cleaned_items++))
+                    else
+                        rm -f "$temp_file"
+                        log_warning "jq 处理配置文件失败，请手动检查 $claude_settings"
+                    fi
+                else
+                    log_warning "未安装 jq，无法自动清理 Claude 配置文件"
+                    log_warning "请手动编辑 $claude_settings 移除 TermWatch 相关的钩子配置"
+                fi
+            fi
+        fi
+    fi
+    
+    # 清理 Claude 配置备份文件
+    local backup_files=$(find "$HOME/.claude" -name "settings.json.backup.*" 2>/dev/null | grep -v termwatch || true)
+    if [[ -n "$backup_files" ]]; then
+        log_info "发现 Claude 配置备份文件"
+        read -p "是否删除旧的 Claude 配置备份文件? (y/N): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "$backup_files" | while read -r backup_file; do
+                if [[ -f "$backup_file" ]]; then
+                    rm "$backup_file"
+                    log_info "已删除备份文件: $backup_file"
+                    ((cleaned_items++))
+                fi
+            done
+        fi
+    fi
+    
+    if [[ $cleaned_items -gt 0 ]]; then
+        log_success "Claude Code 钩子集成清理完成"
+        log_warning "请重启 Claude Code 以使更改生效"
+    else
+        log_info "无需清理 Claude Code 钩子集成"
+    fi
+}
+
 # 删除文件和目录
 remove_files() {
     log_info "删除 TermWatch 文件..."
@@ -265,18 +381,22 @@ show_completion() {
     echo "已完成以下操作:"
     echo "  ✅ 删除 TermWatch 文件和配置目录"
     echo "  ✅ 精确清理 Shell 配置中的 TermWatch 内容"
+    echo "  ✅ 清理 Claude Code 钩子集成（如果存在）"
     echo "  ✅ 清理系统进程和缓存"
     echo "  ✅ 移除所有别名 (termwatch, notify, notify_*, 等)"
     echo
     echo "🛡️ 安全保障:"
     echo "  • 所有修改的 Shell 配置文件已自动备份"
+    echo "  • Claude Code 钩子和配置已备份（如果选择清理）"
     echo "  • terminal-notifier 保持完整，可供其他应用使用"
     echo "  • 系统通知权限设置未被更改"
     echo "  • 用户其他配置完全不受影响"
     echo
     echo "📋 后续操作:"
     echo "  • 请重启终端或重新加载 Shell 配置以使更改生效"
+    echo "  • 如果清理了 Claude Code 钩子，请重启 Claude Code"
     echo "  • 备份文件位于原配置文件旁边，命名格式: .termwatch_backup_时间戳"
+    echo "  • Claude 钩子备份位于: ~/.claude/hooks/termwatch_backup_时间戳"
     echo "  • 如需恢复，可手动复制备份文件内容"
     echo
     echo "🔄 重新安装:"
@@ -299,6 +419,7 @@ main() {
     backup_config
     clean_processes
     clean_shell_config
+    clean_claude_hooks
     remove_files
     clean_system_cache
     verify_uninstall
