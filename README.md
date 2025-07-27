@@ -6,6 +6,8 @@
 ![Apple Watch](https://img.shields.io/badge/Apple%20Watch-Supported-green)
 ![Version](https://img.shields.io/badge/version-1.0.0-orange)
 
+[TOC]
+
 ## ✨ 功能特性
 
 - 🚀 **智能通知**: 自动发送命令执行完成通知
