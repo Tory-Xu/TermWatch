@@ -319,38 +319,96 @@ run_uninstaller() {
     echo "=== TermWatch 一键卸载 ==="
     echo ""
     
-    # 检查卸载脚本是否存在
-    local uninstall_script="$PROJECT_ROOT/scripts/uninstall.sh"
+    # 尝试多个可能的卸载脚本位置
+    local possible_uninstall_scripts=(
+        "$PROJECT_ROOT/scripts/uninstall.sh"                    # 当前项目目录
+        "/usr/local/share/termwatch/scripts/uninstall.sh"       # 系统安装
+        "$HOME/.local/share/termwatch/scripts/uninstall.sh"     # 用户安装
+        # 常见源码位置
+        "$HOME/Documents/MyGitHub/TermWatch/scripts/uninstall.sh"
+        "$HOME/Documents/GitHub/TermWatch/scripts/uninstall.sh"
+        "$HOME/Projects/TermWatch/scripts/uninstall.sh"
+        "$HOME/TermWatch/scripts/uninstall.sh"
+        "/tmp/TermWatch/scripts/uninstall.sh"
+    )
     
-    if [[ -f "$uninstall_script" ]]; then
-        echo "🔧 启动卸载程序..."
+    local uninstall_script=""
+    for script in "${possible_uninstall_scripts[@]}"; do
+        if [[ -f "$script" ]]; then
+            uninstall_script="$script"
+            break
+        fi
+    done
+    
+    if [[ -n "$uninstall_script" ]]; then
+        echo "🔧 启动完整卸载程序..."
+        echo "使用脚本: $uninstall_script"
         bash "$uninstall_script"
     else
-        # 如果卸载脚本不存在，提供简单的卸载方法
-        echo "⚠️ 未找到完整卸载脚本，提供简单卸载方法："
+        # 内置简单卸载功能
+        echo "📋 执行内置卸载程序..."
         echo ""
-        echo "1. 删除配置目录："
-        echo "   rm -rf ~/.termwatch"
-        echo ""
-        echo "2. 从 shell 配置中移除 TermWatch 相关行："
-        echo "   编辑 ~/.zshrc 或 ~/.bash_profile"
-        echo "   删除包含 'termwatch' 或 'TermWatch' 的行"
-        echo ""
-        echo "3. 重载 shell 配置："
-        echo "   source ~/.zshrc  # 或 source ~/.bash_profile"
+        echo "将要删除以下内容:"
+        echo "  📁 配置目录: ~/.termwatch"
+        echo "  📝 Shell 配置中的 TermWatch 相关行"
         echo ""
         
-        read -p "是否执行简单卸载（只删除配置目录）？ (y/N): " -n 1 -r
+        read -p "确定要卸载 TermWatch 吗? (y/N): " -n 1 -r
         echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            if [[ -d "$HOME/.termwatch" ]]; then
-                rm -rf "$HOME/.termwatch"
-                echo "✅ 已删除 ~/.termwatch 目录"
-                echo "⚠️ 请手动清理 shell 配置文件中的 TermWatch 相关内容"
-            else
-                echo "ℹ️ 配置目录 ~/.termwatch 不存在"
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "卸载已取消"
+            return 0
+        fi
+        
+        # 备份配置（可选）
+        if [[ -d "$HOME/.termwatch" ]]; then
+            read -p "是否备份当前配置? (y/N): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                local backup_dir="$HOME/.termwatch_backup_$(date +%Y%m%d_%H%M%S)"
+                cp -r "$HOME/.termwatch" "$backup_dir"
+                echo "✅ 配置已备份到: $backup_dir"
             fi
         fi
+        
+        # 删除配置目录
+        if [[ -d "$HOME/.termwatch" ]]; then
+            rm -rf "$HOME/.termwatch"
+            echo "✅ 已删除 ~/.termwatch 目录"
+        fi
+        
+        # 清理 shell 配置
+        echo "🔧 清理 shell 配置..."
+        local shell_configs=(
+            "$HOME/.zshrc"
+            "$HOME/.bash_profile"
+            "$HOME/.bashrc"
+        )
+        
+        for config_file in "${shell_configs[@]}"; do
+            if [[ -f "$config_file" ]] && grep -q "termwatch\|TermWatch" "$config_file"; then
+                # 创建备份
+                cp "$config_file" "${config_file}.termwatch_backup"
+                
+                # 删除 TermWatch 相关行
+                if [[ "$(uname)" == "Darwin" ]]; then
+                    sed -i '' '/termwatch\|TermWatch/d' "$config_file"
+                else
+                    sed -i '/termwatch\|TermWatch/d' "$config_file"
+                fi
+                
+                echo "✅ 已清理 $config_file (备份为 ${config_file}.termwatch_backup)"
+            fi
+        done
+        
+        echo ""
+        echo "🎉 TermWatch 卸载完成！"
+        echo ""
+        echo "注意事项:"
+        echo "  • 请重新加载 shell 配置: source ~/.zshrc"
+        echo "  • Shell 配置文件已自动备份"
+        echo "  • terminal-notifier 未被删除"
+        echo ""
     fi
 }
 
