@@ -169,6 +169,61 @@ send_serverchan_notification() {
     fi
 }
 
+# 发送 Bark 通知（iOS 推送）
+send_bark_notification() {
+    local title="$1"
+    local message="$2"
+    local type="$3"
+    
+    [[ -z "$BARK_KEY" ]] && return 1
+    
+    # 构建 Bark API URL
+    local bark_url="${BARK_SERVER:-https://api.day.app}/$BARK_KEY"
+    # URL 编码函数
+    local encoded_title=$(printf "%s" "$title" | python3 -c "import sys, urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))" 2>/dev/null || printf "%s" "$title" | sed 's/ /%20/g')
+    local encoded_message=$(printf "%s" "$message" | python3 -c "import sys, urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))" 2>/dev/null || printf "%s" "$message" | sed 's/ /%20/g')
+    
+    # 根据通知类型设置参数
+    local sound="${BARK_SOUND:-default}"
+    local group="${BARK_GROUP:-TermWatch}"
+    local icon="${BARK_ICON:-}"
+    local level="active"
+    
+    case "$type" in
+        "error") 
+            sound="multiwayinvitation"
+            level="timeSensitive"
+            ;;
+        "warning") 
+            sound="bell"
+            level="timeSensitive"
+            ;;
+        "success") 
+            sound="birdsong"
+            ;;
+    esac
+    
+    # 构建完整的 API 请求
+    local full_url="$bark_url/$encoded_title/$encoded_message"
+    local params="?sound=$sound&group=$group&level=$level"
+    
+    # 添加自定义图标（如果配置了）
+    if [[ -n "$icon" ]]; then
+        params="$params&icon=$icon"
+    fi
+    
+    # 发送推送请求
+    local response=$(curl -s -w "%{http_code}" "$full_url$params")
+    local http_code="${response: -3}"
+    
+    # 检查响应状态码
+    if [[ "$http_code" == "200" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 # 主要通知函数
 send_notification() {
     local title="${1:-$NOTIFICATION_TITLE}"
@@ -195,6 +250,7 @@ send_notification() {
     # 发送远程通知（根据配置选择模式）
     local serverchan_sent=false
     local pushover_sent=false
+    local bark_sent=false
     local any_remote_sent=false
     
     # Server酱 通知
@@ -216,11 +272,23 @@ send_notification() {
         fi
     fi
     
+    # Bark 通知
+    if [[ "$ENABLE_BARK" == "true" ]]; then
+        # 并行模式：总是尝试发送；优先级模式：仅在前面失败时发送
+        if [[ "$ENABLE_PARALLEL_PUSH" == "true" ]] || [[ "$serverchan_sent" == "false" && "$pushover_sent" == "false" ]]; then
+            if send_bark_notification "$title" "$message" "$type"; then
+                log_info "Bark 通知发送成功"
+                bark_sent=true
+                any_remote_sent=true
+            fi
+        fi
+    fi
+    
     # 记录发送结果
     if [[ "$any_remote_sent" == "false" ]]; then
         log_info "远程通知未配置或发送失败"
     elif [[ "$ENABLE_PARALLEL_PUSH" == "true" ]]; then
-        log_info "并行推送模式 - Server酱:$serverchan_sent, Pushover:$pushover_sent"
+        log_info "并行推送模式 - Server酱:$serverchan_sent, Pushover:$pushover_sent, Bark:$bark_sent"
     fi
 }
 
@@ -319,6 +387,17 @@ show_status() {
         fi
     else
         echo "  ❌ Pushover (已禁用)"
+    fi
+    
+    # Bark 状态
+    if [[ "$ENABLE_BARK" == "true" ]]; then
+        if [[ -n "$BARK_KEY" ]]; then
+            echo "  ✅ Bark (已启用，已配置)"
+        else
+            echo "  ⚠️ Bark (已启用，未配置)"
+        fi
+    else
+        echo "  ❌ Bark (已禁用)"
     fi
 }
 

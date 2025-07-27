@@ -65,7 +65,7 @@ npm run build || notify_error "构建失败，请检查日志"
 
 ## 📱 手机和 Apple Watch 通知设置
 
-TermWatch 支持两种远程推送服务，可以将通知发送到手机和 Apple Watch：
+TermWatch 支持三种远程推送服务，可以将通知发送到手机和 Apple Watch：
 
 ### 🚀 Server酱（推荐）- 免费微信推送
 
@@ -91,6 +91,35 @@ TermWatch 支持两种远程推送服务，可以将通知发送到手机和 App
    ```bash
    nano ~/.termwatch/config/user.conf
    # 添加：SERVERCHAN_SENDKEY="xxx"
+   ```
+
+3. **测试通知**
+   ```bash
+   bash src/termwatch.sh --test
+   ```
+
+### 📱 Bark（推荐）- iOS 原生推送
+
+**优势：**
+- ✅ 免费且开源
+- 📱 支持 iPhone 和 Apple Watch
+- 🎯 支持多种通知级别和声音
+- 🔐 支持自建服务器保护隐私
+- 🏎️ 响应速度快，通知样式丰富
+
+**设置步骤：**
+
+1. **安装 Bark 应用**
+   - 从 App Store 下载 [Bark](https://apps.apple.com/app/bark-custom-notifications/id1403753865) 应用
+   - 打开应用获取推送 Key
+
+2. **配置 TermWatch**
+   ```bash
+   # 运行配置脚本
+   bash scripts/configure-bark.sh
+   
+   # 或手动配置
+   nano ~/.termwatch/config/user.conf
    ```
 
 3. **测试通知**
@@ -126,18 +155,20 @@ TermWatch 支持精细化的推送服务控制：
 # 推送服务开关（可独立控制每个服务）
 ENABLE_SERVERCHAN=true     # 是否启用 Server酱 推送
 ENABLE_PUSHOVER=true       # 是否启用 Pushover 推送
+ENABLE_BARK=true           # 是否启用 Bark 推送
 ENABLE_PARALLEL_PUSH=false # 推送模式选择
 ```
 
 **推送模式：**
-- **优先级模式** (`ENABLE_PARALLEL_PUSH=false`): 优先使用 Server酱，失败时尝试 Pushover
+- **优先级模式** (`ENABLE_PARALLEL_PUSH=false`): 优先使用 Server酱，失败时依次尝试 Bark 和 Pushover
 - **并行模式** (`ENABLE_PARALLEL_PUSH=true`): 同时发送到所有启用的服务
 
 **使用场景：**
-- 只用微信：`ENABLE_SERVERCHAN=true, ENABLE_PUSHOVER=false`
-- 只用 Apple Watch：`ENABLE_SERVERCHAN=false, ENABLE_PUSHOVER=true`
-- 双重保障：`ENABLE_PARALLEL_PUSH=true` 同时发送到两个服务
-- 智能备份：`ENABLE_PARALLEL_PUSH=false` 主用 Server酱，备用 Pushover
+- 只用微信：`ENABLE_SERVERCHAN=true, ENABLE_PUSHOVER=false, ENABLE_BARK=false`
+- 只用 Bark：`ENABLE_SERVERCHAN=false, ENABLE_PUSHOVER=false, ENABLE_BARK=true`
+- 只用 Pushover：`ENABLE_SERVERCHAN=false, ENABLE_PUSHOVER=true, ENABLE_BARK=false`
+- 多重保障：`ENABLE_PARALLEL_PUSH=true` 同时发送到所有启用的服务
+- 智能备份：`ENABLE_PARALLEL_PUSH=false` 主用 Server酱，备用 Bark 和 Pushover
 
 ## ⚙️ 配置选项
 
@@ -218,6 +249,7 @@ TermWatch/
 ├── scripts/
 │   ├── configure-pushover.sh   # Pushover 配置脚本
 │   ├── configure-serverchan.sh # Server酱配置脚本
+│   ├── configure-bark.sh       # Bark 配置脚本
 │   ├── test-notification.sh    # 通知测试脚本
 │   └── uninstall.sh           # 卸载脚本
 └── docs/
