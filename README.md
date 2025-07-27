@@ -1,6 +1,6 @@
 # TermWatch
 
-**将终端命令执行通知发送到 macOS 和 Apple Watch 的智能工具**
+**专为 Claude Code 设计的智能终端通知工具 - 将 AI 编程任务状态实时推送到 macOS、iPhone 和 Apple Watch**，**Android** 和 **Watch** 设备同样支持。
 
 ![macOS](https://img.shields.io/badge/macOS-Compatible-blue)
 ![Apple Watch](https://img.shields.io/badge/Apple%20Watch-Supported-green)
@@ -23,8 +23,9 @@
   - [通知类型](#通知类型)
   - [高级用法](#高级用法)
 - [📁 项目结构](#-项目结构)
-- [🤖 第三方集成](#-第三方集成)
-  - [Claude Code 集成](#claude-code-集成)
+- [🤖 Claude Code 集成](#-claude-code-集成)
+  - [核心功能](#核心功能)
+  - [快速配置](#快速配置)
 - [🛠️ 系统要求](#️-系统要求)
 - [🔧 故障排除](#-故障排除)
   - [通知不显示](#通知不显示)
@@ -33,15 +34,18 @@
 - [🤝 贡献](#-贡献)
 - [📄 许可证](#-许可证)
 - [🙏 致谢](#-致谢)
+- [🌟 为什么选择 TermWatch](#-为什么选择-termwatch)
 
 ## ✨ 功能特性
 
-- 🚀 **智能通知**: 自动发送命令执行完成通知
-- ⌚ **Apple Watch 同步**: 通过 Pushover 支持 Apple Watch 通知
-- 🎛️ **灵活配置**: 支持自定义通知条件和消息模板
-- 🔕 **静音时间**: 支持设置免打扰时间段
+- 🤖 **Claude Code Hook 集成**: 原生支持 Claude Code 钩子系统，智能监控 AI 编程任务状态
+- 🚀 **智能通知**: 自动发送命令执行完成通知，支持任务完成、等待输入等多种场景
+- ⌚ **Apple Watch 同步**: 通过 Bark/Server酱支持 Apple Watch 和 iPhone 通知
+- 🎛️ **灵活配置**: 支持自定义通知条件、消息模板和多服务推送策略
+- 🔕 **静音时间**: 支持设置免打扰时间段，避免深夜干扰
 - 📱 **多种通知类型**: 成功、错误、警告、信息四种通知类型
-- 🛡️ **通知去重**: 避免重复通知干扰
+- 🛡️ **通知去重**: 智能去重机制，避免重复通知干扰
+- 🔗 **Hook 系统**: 支持 Claude Code 的 user-prompt-submit 和 finish-commands 钩子
 
 ## 🚀 快速开始
 
@@ -52,11 +56,14 @@
 git clone https://github.com/Tory-Xu/TermWatch.git
 cd TermWatch
 
-# 运行安装脚本
+# 运行安装脚本（包含 Claude Code 钩子配置）
 ./install.sh
 
 # 重载 shell 配置
 source ~/.zshrc  # 或 source ~/.bash_profile
+
+# 验证 Claude Code 集成状态
+termwatch --status
 ```
 
 ### 基本使用
@@ -77,6 +84,16 @@ termwatch -t "自定义标题" "自定义消息"
 
 ### 实际使用场景
 
+**Claude Code 集成场景：**
+```bash
+# Claude 完成代码重构后自动通知
+# 通知内容："✅ Claude 完成任务: 重构 auth 模块 (耗时 3m 25s)"
+
+# Claude 需要用户确认时立即通知
+# 通知内容："🔔 Claude 等待输入中: 需要确认数据库迁移方案"
+```
+
+**普通终端使用：**
 ```bash
 # 长时间命令完成后通知
 npm install && notify_success "依赖安装完成"
@@ -271,16 +288,36 @@ TermWatch/
     └── claude-code-integration.md # Claude Code 集成教程
 ```
 
-## 🤖 第三方集成
+## 🤖 Claude Code 集成
 
-### Claude Code 集成
+TermWatch 专为 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 设计，通过钩子系统实现 AI 编程任务的智能通知：
 
-TermWatch 已完美集成到 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 中，通过钩子系统实现智能通知：
+### 核心功能
 
-- 📋 **任务完成通知**：Claude 完成任务时自动推送
-- 🔔 **等待输入提醒**：Claude 需要用户输入时发送提醒
-- 🌐 **多渠道推送**：同时推送到 macOS、微信、Apple Watch
-- ⚙️ **自动化配置**：无需手动干预，智能识别推送时机
+- 📋 **任务完成通知**：Claude 完成编程任务时自动推送，包含任务摘要和执行时长
+- 🔔 **等待输入提醒**：Claude 需要用户输入时立即发送提醒，避免错过重要交互
+- 🌐 **多渠道推送**：同时推送到 macOS 本地通知、iPhone、Apple Watch
+- ⚙️ **零配置集成**：运行安装脚本即可自动配置 Claude Code 钩子
+- 📊 **状态追踪**：实时追踪 AI 任务执行状态，包括开始、进行中、完成等
+- 🎯 **智能过滤**：根据任务类型和重要性智能过滤通知
+
+### 快速配置
+
+```bash
+# 安装时自动配置 Claude Code 钩子
+./install.sh
+
+# 或单独配置 Claude Code 集成
+bash scripts/configure-claude-hooks.sh
+
+# 验证集成状态
+termwatch --status
+```
+
+**钩子工作流程：**
+1. **user-prompt-submit**: 用户提交任务时触发，记录任务开始
+2. **finish-commands**: Claude 完成所有命令时触发，发送完成通知
+3. **智能判断**: 根据任务执行时长和类型决定是否发送通知
 
 详细配置教程请参考：[Claude Code 集成指南](docs/claude-code-integration.md)
 
@@ -292,6 +329,23 @@ TermWatch 已完美集成到 [Claude Code](https://docs.anthropic.com/en/docs/cl
 - **Shell**: bash 或 zsh
 
 ## 🔧 故障排除
+
+### Claude Code 集成问题
+
+1. **钩子未触发**：
+   ```bash
+   # 检查钩子配置
+   cat ~/.claude/settings.json | grep termwatch
+   
+   # 重新配置钩子
+   bash scripts/configure-claude-hooks.sh
+   
+   # 重启 Claude Code
+   ```
+
+2. **通知延迟**：
+   - 检查日志：`tail -f ~/.termwatch/logs/claude-hook.log`
+   - 调整通知阈值：`CLAUDE_NOTIFY_THRESHOLD=10`
 
 ### 通知不显示
 
@@ -337,6 +391,19 @@ termwatch --uninstall
 
 # 查看日志
 tail -f ~/.termwatch/logs/termwatch.log
+```
+
+### Claude Code 钩子管理
+
+```bash
+# 查看钩子状态
+termwatch --claude-status
+
+# 仅卸载 Claude 钩子
+bash scripts/unconfigure-claude-hooks.sh
+
+# 重新安装钩子
+bash scripts/configure-claude-hooks.sh
 ```
 
 ### 🗑️ 完全卸载说明
@@ -430,10 +497,29 @@ nano ~/.claude/settings.json
 
 ## 🙏 致谢
 
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) - AI 编程助手
 - [terminal-notifier](https://github.com/julienXX/terminal-notifier) - macOS 通知工具
-- [Pushover](https://pushover.net/) - 跨平台推送服务
+- [Bark](https://github.com/Finb/Bark) - iOS 推送服务
+- [Server酱](https://sct.ftqq.com/) - 微信推送服务
 - 所有贡献者和用户的支持
+
+## 🌟 为什么选择 TermWatch
+
+**专为 AI 编程时代设计：**
+- 🤖 **原生 Claude Code Hook 支持**：深度集成 Claude Code 钩子的通知工具
+- 📱 **全平台覆盖**：macOS、iPhone、Apple Watch 无缝同步，同样支持 Android 设备
+- 🚀 **极简配置**：一键安装，自动配置所有集成
+- 🔐 **隐私优先**：支持自建服务器，数据完全掌控
+- 🎯 **智能通知**：根据任务类型和执行时长智能决定通知策略
+
+**使用场景：**
+- 让 Claude Code 帮你重构代码时，完成后立即收到通知
+- Claude 执行长时间构建任务，可以安心做其他事情
+- Claude 需要你的输入时，立即在手表上收到提醒
+- 多个 Claude 任务并行执行，实时掌握每个任务状态
 
 ---
 
 **如果 TermWatch 对你有帮助，请给项目点个 ⭐ 支持一下！**
+
+特别适合 Claude Code 用户，让 AI 编程更加高效！🚀
