@@ -44,9 +44,15 @@ echo ""
 
 # 获取 Bark Key
 echo "🔑 请从 Bark 应用中复制您的推送 Key："
-echo "   • 打开 Bark 应用"
-echo "   • 复制测试 URL，例如: https://api.day.app/yourkey/测试"
-echo "   • 只需要填写 yourkey 部分"
+echo ""
+echo "📱 Key 获取步骤："
+echo "   1. iPhone 打开 Bark 应用"
+echo "   2. 进入 [服务器] > [☁️] 进入 \"服务器列表\""
+echo "   3. 点击服务后选择 \"复制地址和Key\""
+echo "   4. 从 https://api.day.app/{Key}/ 格式的 URL 中提取 Key"
+echo ""
+echo "   示例: https://api.day.app/a3bG27ELJkkTi3gqMWiRGi/"
+echo "   Key 就是: a3bG27ELJkkTi3gqMWiRGi"
 echo ""
 
 while true; do
