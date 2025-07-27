@@ -88,10 +88,28 @@ ENABLE_QUIET_HOURS=false
 QUIET_HOURS_START=22
 QUIET_HOURS_END=8
 
-# Pushover 配置（可选 - 用于 Apple Watch 通知）
-# 注册 https://pushover.net/ 获取密钥
-# PUSHOVER_USER="你的用户密钥"
-# PUSHOVER_TOKEN="你的API令牌"
+# 日志设置
+ENABLE_LOGGING=true
+LOG_LEVEL=INFO
+LOG_FILE="$HOME/.termwatch/logs/termwatch.log"
+
+# 通知去重设置
+DUPLICATE_THRESHOLD=300
+ENABLE_DEDUPLICATION=false
+
+# 远程推送服务配置
+ENABLE_SERVERCHAN=false           # 是否启用 Server酱 推送
+ENABLE_BARK=true                  # 是否启用 Bark 推送（推荐）
+ENABLE_PARALLEL_PUSH=false        # 是否并行发送到所有服务（false=优先级模式）
+
+# Bark 推送配置（推荐）
+# 1. 从 App Store 下载 Bark 应用
+# 2. 复制应用中的推送 Key
+# 3. 取消注释并填写下面的配置项
+# BARK_KEY=""                      # Bark 推送 Key
+# BARK_SERVER="https://api.day.app" # Bark 服务器地址（默认官方服务器）
+# BARK_SOUND="default"             # 推送声音
+# BARK_GROUP="TermWatch"           # 推送分组名称
 EOF
 fi
 
@@ -147,10 +165,12 @@ echo "  # 发送不同类型通知"
 echo "  notify_success \"任务完成\""
 echo "  notify_error \"出现错误\""
 echo
-echo -e "${YELLOW}Apple Watch 通知设置:${NC}"
-echo "  1. 访问 https://pushover.net/ 注册账号"
-echo "  2. 获取 User Key 和 API Token"
-echo "  3. 运行配置脚本: bash scripts/configure-pushover.sh"
+echo -e "${YELLOW}iPhone/Apple Watch 通知设置:${NC}"
+echo "  🚀 Bark（推荐）："
+echo "    1. 从 App Store 下载 Bark 应用"
+echo "    2. 运行配置脚本: bash scripts/configure-bark.sh"
+echo "  📱 Server酱（备选）："
+echo "    1. 运行配置脚本: bash scripts/configure-serverchan.sh"
 echo
 echo -e "${YELLOW}配置文件:${NC} $INSTALL_DIR/config/user.conf"
 echo -e "${YELLOW}日志目录:${NC} $INSTALL_DIR/logs/"

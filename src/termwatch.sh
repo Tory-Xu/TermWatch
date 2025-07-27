@@ -300,6 +300,7 @@ TermWatch - 终端命令通知工具
   -h, --help            显示此帮助信息
   --test                发送测试通知
   --status              显示状态信息
+  --uninstall           一键卸载 TermWatch
 
 示例:
   $0 "Hello TermWatch!"
@@ -311,6 +312,46 @@ TermWatch - 终端命令通知工具
   配置文件: ~/.termwatch/config/user.conf
   日志文件: ~/.termwatch/logs/termwatch.log
 EOF
+}
+
+# 运行卸载程序
+run_uninstaller() {
+    echo "=== TermWatch 一键卸载 ==="
+    echo ""
+    
+    # 检查卸载脚本是否存在
+    local uninstall_script="$PROJECT_ROOT/scripts/uninstall.sh"
+    
+    if [[ -f "$uninstall_script" ]]; then
+        echo "🔧 启动卸载程序..."
+        bash "$uninstall_script"
+    else
+        # 如果卸载脚本不存在，提供简单的卸载方法
+        echo "⚠️ 未找到完整卸载脚本，提供简单卸载方法："
+        echo ""
+        echo "1. 删除配置目录："
+        echo "   rm -rf ~/.termwatch"
+        echo ""
+        echo "2. 从 shell 配置中移除 TermWatch 相关行："
+        echo "   编辑 ~/.zshrc 或 ~/.bash_profile"
+        echo "   删除包含 'termwatch' 或 'TermWatch' 的行"
+        echo ""
+        echo "3. 重载 shell 配置："
+        echo "   source ~/.zshrc  # 或 source ~/.bash_profile"
+        echo ""
+        
+        read -p "是否执行简单卸载（只删除配置目录）？ (y/N): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            if [[ -d "$HOME/.termwatch" ]]; then
+                rm -rf "$HOME/.termwatch"
+                echo "✅ 已删除 ~/.termwatch 目录"
+                echo "⚠️ 请手动清理 shell 配置文件中的 TermWatch 相关内容"
+            else
+                echo "ℹ️ 配置目录 ~/.termwatch 不存在"
+            fi
+        fi
+    fi
 }
 
 # 显示状态信息
@@ -385,6 +426,10 @@ main() {
                 ;;
             --status)
                 show_status
+                exit 0
+                ;;
+            --uninstall)
+                run_uninstaller
                 exit 0
                 ;;
             success|error|warning|info)

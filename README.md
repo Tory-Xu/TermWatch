@@ -188,6 +188,7 @@ termwatch <类型> <消息>          # 发送指定类型通知
 termwatch --help                 # 显示帮助
 termwatch --status               # 显示状态信息
 termwatch --test                 # 发送测试通知
+termwatch --uninstall            # 一键卸载 TermWatch
 ```
 
 ### 通知类型
@@ -293,6 +294,12 @@ TermWatch 已完美集成到 [Claude Code](https://docs.anthropic.com/en/docs/cl
 ```bash
 # 查看当前状态
 termwatch --status
+
+# 一键卸载（推荐）
+termwatch --uninstall
+
+# 完整卸载（手动）
+./scripts/uninstall.sh
 
 # 重新安装
 ./scripts/uninstall.sh && ./install.sh
