@@ -97,7 +97,10 @@ TermWatch 支持两种远程推送服务，可以将通知发送到手机和 App
    bash src/termwatch.sh --test
    ```
 
-### 🚀 Server酱（备选）- 免费微信推送
+4. **关闭 mac 收到 iPhone 镜像通知**
+   - iPhone 进入 Bark 通知设置页面，关闭“在Mac上显示”
+
+### 🚀 Server酱（备选）- 免费微信推送，支持 iPhone 和 android
 
 **适合场景：** 已有微信，希望通过微信接收通知
 
