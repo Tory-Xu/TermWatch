@@ -40,6 +40,7 @@ echo "   1. 推送 Key（从 Bark 应用中复制）"
 echo "   2. 服务器地址（可选，默认使用官方服务器）"
 echo "   3. 推送声音（可选）"
 echo "   4. 推送分组（可选）"
+echo "   5. 推送图标（可选，可选择预设的 Claude 图标）"
 echo ""
 
 # 获取 Bark Key
@@ -100,7 +101,39 @@ fi
 
 # 获取自定义图标（可选）
 echo ""
-read -p "🎨 自定义推送图标 URL（可选，留空跳过）: " bark_icon
+echo "🎨 推送图标设置："
+echo "   1. 使用预设 Claude 图标（推荐）"
+echo "   2. 自定义图标 URL"
+echo "   3. 不使用图标"
+echo ""
+
+while true; do
+    read -p "请选择图标选项 [1/2/3]: " icon_choice
+    case $icon_choice in
+        1)
+            bark_icon="https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/claude-color.png"
+            echo "✅ 已选择 Claude 官方图标"
+            break
+            ;;
+        2)
+            read -p "请输入自定义图标 URL: " bark_icon
+            if [[ -n "$bark_icon" ]]; then
+                echo "✅ 已设置自定义图标: $bark_icon"
+                break
+            else
+                echo "❌ 请输入有效的图标 URL"
+            fi
+            ;;
+        3)
+            bark_icon=""
+            echo "✅ 不使用推送图标"
+            break
+            ;;
+        *)
+            echo "❌ 请输入 1、2 或 3"
+            ;;
+    esac
+done
 
 echo ""
 echo "⚙️ 正在保存配置..."
