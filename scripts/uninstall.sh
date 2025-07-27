@@ -31,10 +31,18 @@ show_uninstall_info() {
     echo
     echo "将要删除以下内容:"
     echo "  📁 配置目录: ~/.termwatch"
-    echo "  📝 Shell 配置中的 TermWatch 相关行"
+    echo "  📝 Shell 配置中的 TermWatch 相关配置:"
+    echo "      • TermWatch 通知工具注释块"
+    echo "      • termwatch 命令别名"
+    echo "      • notify 系列别名 (notify, notify_success, notify_error, notify_warning, notify_info)"
+    echo "      • 其他包含 termwatch/TermWatch 的配置行"
     echo "  🗂️ 日志和缓存文件"
+    echo "  🔗 可能的符号链接"
     echo
-    echo "注意: terminal-notifier 不会被卸载"
+    echo "✅ 安全措施:"
+    echo "  • 自动备份所有修改的 Shell 配置文件"
+    echo "  • terminal-notifier 保持不变"
+    echo "  • 系统通知权限设置保持不变"
     echo
 }
 
@@ -77,28 +85,72 @@ clean_shell_config() {
     for config_file in "${shell_configs[@]}"; do
         if [[ -f "$config_file" ]]; then
             # 检查是否包含 TermWatch 相关配置
-            if grep -q "termwatch\|TermWatch" "$config_file"; then
-                log_info "清理 $config_file"
+            if grep -q "# TermWatch 通知工具\|termwatch\|TermWatch" "$config_file"; then
+                log_info "发现 TermWatch 配置: $config_file"
                 
                 # 创建备份
-                cp "$config_file" "${config_file}.termwatch_backup"
+                cp "$config_file" "${config_file}.termwatch_backup_$(date +%Y%m%d_%H%M%S)"
                 
-                # 删除 TermWatch 相关行
-                if [[ "$(uname)" == "Darwin" ]]; then
-                    sed -i '' '/termwatch\|TermWatch/d' "$config_file"
-                else
-                    sed -i '/termwatch\|TermWatch/d' "$config_file"
-                fi
+                # 更精确地移除 TermWatch 配置块
+                # 使用临时文件来处理
+                local temp_file=$(mktemp)
+                local in_termwatch_block=false
+                local removed_lines=0
                 
-                # 清理空行
-                if [[ "$(uname)" == "Darwin" ]]; then
-                    sed -i '' '/^[[:space:]]*$/N;/^\n$/d' "$config_file"
-                else
-                    sed -i '/^[[:space:]]*$/N;/^\n$/d' "$config_file"
-                fi
+                while IFS= read -r line || [[ -n "$line" ]]; do
+                    # 检测 TermWatch 配置块的开始
+                    if [[ "$line" =~ ^[[:space:]]*#[[:space:]]*TermWatch[[:space:]]*通知工具 ]]; then
+                        in_termwatch_block=true
+                        ((removed_lines++))
+                        continue
+                    fi
+                    
+                    # 在 TermWatch 块中，跳过所有相关行
+                    if [[ "$in_termwatch_block" == true ]]; then
+                        if [[ "$line" =~ ^[[:space:]]*alias[[:space:]]+(termwatch|notify|notify_success|notify_error|notify_warning|notify_info) ]] || \
+                           [[ "$line" =~ termwatch|TermWatch ]]; then
+                            ((removed_lines++))
+                            continue
+                        elif [[ "$line" =~ ^[[:space:]]*$ ]]; then
+                            # 空行，继续检查下一行是否还在块中
+                            continue
+                        else
+                            # 遇到非 TermWatch 相关的行，结束块
+                            in_termwatch_block=false
+                        fi
+                    fi
+                    
+                    # 不在 TermWatch 块中的其他行，但仍需检查是否是独立的 TermWatch 行
+                    if [[ ! "$in_termwatch_block" == true ]] && [[ "$line" =~ termwatch|TermWatch ]]; then
+                        ((removed_lines++))
+                        continue
+                    fi
+                    
+                    # 保留的行写入临时文件
+                    echo "$line" >> "$temp_file"
+                done < "$config_file"
                 
-                log_info "已备份原文件为: ${config_file}.termwatch_backup"
+                # 替换原文件
+                mv "$temp_file" "$config_file"
+                
+                log_info "已从 $config_file 中移除 $removed_lines 行 TermWatch 配置"
+                log_info "已备份原文件为: ${config_file}.termwatch_backup_$(date +%Y%m%d_%H%M%S)"
+                
+                # 显示清理的配置内容
+                echo "    清理的配置内容包括:"
+                echo "      • TermWatch 通知工具注释"
+                echo "      • termwatch 别名"
+                echo "      • notify 系列别名 (notify, notify_success, notify_error, notify_warning, notify_info)"
+                echo "      • 其他包含 termwatch/TermWatch 的行"
             fi
+        fi
+    done
+    
+    echo
+    log_warn "重要提示: 请重启终端或运行以下命令使配置生效:"
+    for config_file in "${shell_configs[@]}"; do
+        if [[ -f "$config_file" ]]; then
+            echo "  source $config_file"
         fi
     done
 }
@@ -211,16 +263,23 @@ show_completion() {
     echo "========================================"
     echo
     echo "已完成以下操作:"
-    echo "  ✅ 删除 TermWatch 文件和配置"
-    echo "  ✅ 清理 Shell 配置"
-    echo "  ✅ 清理系统进程"
+    echo "  ✅ 删除 TermWatch 文件和配置目录"
+    echo "  ✅ 精确清理 Shell 配置中的 TermWatch 内容"
+    echo "  ✅ 清理系统进程和缓存"
+    echo "  ✅ 移除所有别名 (termwatch, notify, notify_*, 等)"
     echo
-    echo "注意事项:"
-    echo "  • terminal-notifier 未被删除"
-    echo "  • 通知权限设置保持不变"
-    echo "  • Shell 配置文件已备份"
+    echo "🛡️ 安全保障:"
+    echo "  • 所有修改的 Shell 配置文件已自动备份"
+    echo "  • terminal-notifier 保持完整，可供其他应用使用"
+    echo "  • 系统通知权限设置未被更改"
+    echo "  • 用户其他配置完全不受影响"
     echo
-    echo "如需重新安装，请运行:"
+    echo "📋 后续操作:"
+    echo "  • 请重启终端或重新加载 Shell 配置以使更改生效"
+    echo "  • 备份文件位于原配置文件旁边，命名格式: .termwatch_backup_时间戳"
+    echo "  • 如需恢复，可手动复制备份文件内容"
+    echo
+    echo "🔄 重新安装:"
     echo "  git clone <repository> && cd TermWatch && ./install.sh"
     echo
     echo "感谢使用 TermWatch! 👋"

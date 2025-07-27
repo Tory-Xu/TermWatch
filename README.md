@@ -339,6 +339,43 @@ termwatch --uninstall
 tail -f ~/.termwatch/logs/termwatch.log
 ```
 
+### 🗑️ 完全卸载说明
+
+TermWatch 卸载程序提供了安全、完整的清理功能：
+
+**自动清理内容：**
+- 📁 **配置目录**: 完全删除 `~/.termwatch` 目录及所有内容
+- 📝 **Shell 配置**: 精确移除以下内容：
+  - `# TermWatch 通知工具` 注释块
+  - `termwatch` 命令别名
+  - `notify` 系列别名 (`notify`, `notify_success`, `notify_error`, `notify_warning`, `notify_info`)
+  - 其他包含 `termwatch`/`TermWatch` 的配置行
+- 🔗 **符号链接**: 清理可能的系统链接
+- 🗂️ **日志缓存**: 删除所有运行日志和缓存文件
+
+**安全保障措施：**
+- ✅ **自动备份**: 修改任何 Shell 配置文件前自动创建带时间戳的备份
+- ✅ **精确清理**: 只移除 TermWatch 相关配置，不影响其他设置
+- ✅ **保留系统工具**: `terminal-notifier` 等系统工具保持完整
+- ✅ **权限不变**: 系统通知权限设置完全不受影响
+
+**卸载后操作：**
+```bash
+# 重启终端或重新加载配置
+source ~/.zshrc     # 或 ~/.bash_profile
+
+# 验证卸载完成
+command -v termwatch  # 应该显示 "not found"
+```
+
+**恢复配置（如果需要）：**
+```bash
+# 备份文件位置: 原文件名.termwatch_backup_时间戳
+# 例如: ~/.zshrc.termwatch_backup_20240127_143052
+cp ~/.zshrc.termwatch_backup_20240127_143052 ~/.zshrc
+source ~/.zshrc
+```
+
 更多故障排除信息请查看 [troubleshooting.md](docs/troubleshooting.md)
 
 ## 🤝 贡献
