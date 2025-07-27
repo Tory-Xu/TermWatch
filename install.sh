@@ -152,27 +152,199 @@ else
 fi
 
 echo
-echo -e "${GREEN}🎉 TermWatch 安装完成！${NC}"
+echo -e "${GREEN}🎉 TermWatch 基础安装完成！${NC}"
 echo
-echo -e "${YELLOW}快速开始:${NC}"
-echo "  # 重载 shell 配置"
-echo "  source $SHELL_CONFIG"
+echo -e "${BLUE}==============================================="
+echo "  立即体验 TermWatch"
+echo -e "===============================================${NC}"
+echo -e "${YELLOW}1. 重载 shell 配置:${NC}"
+echo "   source $SHELL_CONFIG"
 echo
-echo "  # 发送测试通知"
-echo "  notify \"Hello TermWatch!\""
+echo -e "${YELLOW}2. 发送测试通知:${NC}"
+echo "   notify \"Hello TermWatch!\""
+echo "   notify_success \"任务完成\""
+echo "   notify_error \"出现错误\""
 echo
-echo "  # 发送不同类型通知"
-echo "  notify_success \"任务完成\""
-echo "  notify_error \"出现错误\""
+echo -e "${BLUE}==============================================="
+echo "  📱 配置远程推送服务 (推荐)"
+echo -e "===============================================${NC}"
+echo -e "${GREEN}🚀 Bark - iOS/Apple Watch 原生推送${NC} (强烈推荐)"
+echo "   优势: 免费、开源、Apple Watch 完美支持、响应快速"
+echo "   配置: ${YELLOW}bash scripts/configure-bark.sh${NC}"
 echo
-echo -e "${YELLOW}iPhone/Apple Watch 通知设置:${NC}"
-echo "  🚀 Bark（推荐）："
-echo "    1. 从 App Store 下载 Bark 应用"
-echo "    2. 运行配置脚本: bash scripts/configure-bark.sh"
-echo "  📱 Server酱（备选）："
-echo "    1. 运行配置脚本: bash scripts/configure-serverchan.sh"
+echo -e "${GREEN}💬 Server酱 - 微信推送${NC} (备选)"
+echo "   优势: 免费、微信接收、支持 Apple Watch"
+echo "   配置: ${YELLOW}bash scripts/configure-serverchan.sh${NC}"
 echo
+echo -e "${BLUE}==============================================="
+echo "  🤖 Claude Code 智能集成 (可选)"
+echo -e "===============================================${NC}"
+echo "如果你使用 Claude Code，可以启用智能通知功能："
+echo "• 📋 任务完成自动通知"
+echo "• 🔔 等待输入智能提醒"
+echo "• 🌐 多渠道推送 (macOS + 手机 + Apple Watch)"
+echo
+echo -e "${YELLOW}一键安装 Claude 集成:${NC}"
+echo "   ${YELLOW}bash scripts/install-claude-integration.sh${NC}"
+echo
+echo -e "${BLUE}==============================================="
+echo "  📚 更多信息"
+echo -e "===============================================${NC}"
 echo -e "${YELLOW}配置文件:${NC} $INSTALL_DIR/config/user.conf"
 echo -e "${YELLOW}日志目录:${NC} $INSTALL_DIR/logs/"
+echo -e "${YELLOW}完整文档:${NC} README.md"
+echo -e "${YELLOW}获取帮助:${NC} termwatch --help"
 echo
-echo "需要帮助? 查看 README.md 或运行 'termwatch --help'"
+echo -e "${GREEN}💡 推荐配置流程:${NC}"
+echo "   1️⃣  先配置远程推送服务 (Bark 或 Server酱)"
+echo "   2️⃣  然后安装 Claude Code 集成 (如果使用)"
+echo "   3️⃣  享受全方位的智能通知体验!"
+echo
+echo -e "${GREEN}🎯 现在就开始配置吧！${NC}"
+echo
+
+# 交互式配置引导
+show_interactive_setup() {
+    echo -e "${BLUE}==============================================="
+    echo "  🚀 一键配置向导"
+    echo -e "===============================================${NC}"
+    
+    local configured_services=()
+    
+    # 显示选项的函数
+    show_menu_options() {
+        echo "请选择要配置的服务："
+        echo
+        echo "1️⃣  配置 Bark 推送 (iOS/Apple Watch 推荐)"
+        echo "2️⃣  配置 Server酱 推送 (微信接收)"
+        echo "3️⃣  安装 Claude Code 集成 (智能通知)"
+        echo "4️⃣  完成配置"
+        echo
+        
+        # 显示已配置的服务
+        if [[ ${#configured_services[@]} -gt 0 ]]; then
+            echo -e "${GREEN}✅ 已配置服务: ${configured_services[*]}${NC}"
+            echo
+        fi
+    }
+    
+    while true; do
+        show_menu_options
+        
+        read -p "请选择 (1-4): " -n 1 -r choice
+        echo
+        
+        case $choice in
+            1)
+                echo -e "${GREEN}正在启动 Bark 配置...${NC}"
+                if [[ -f "scripts/configure-bark.sh" ]]; then
+                    if bash scripts/configure-bark.sh; then
+                        configured_services+=("Bark")
+                        echo -e "${GREEN}✅ Bark 配置完成！${NC}"
+                    else
+                        echo -e "${YELLOW}⚠️ Bark 配置未完成${NC}"
+                    fi
+                else
+                    echo -e "${YELLOW}Bark 配置脚本未找到，请手动运行: bash scripts/configure-bark.sh${NC}"
+                fi
+                echo
+                echo "按任意键继续..."
+                read -n 1 -s
+                echo
+                ;;
+            2)
+                echo -e "${GREEN}正在启动 Server酱 配置...${NC}"
+                if [[ -f "scripts/configure-serverchan.sh" ]]; then
+                    if bash scripts/configure-serverchan.sh; then
+                        configured_services+=("Server酱")
+                        echo -e "${GREEN}✅ Server酱 配置完成！${NC}"
+                    else
+                        echo -e "${YELLOW}⚠️ Server酱 配置未完成${NC}"
+                    fi
+                else
+                    echo -e "${YELLOW}Server酱 配置脚本未找到，请手动运行: bash scripts/configure-serverchan.sh${NC}"
+                fi
+                echo
+                echo "按任意键继续..."
+                read -n 1 -s
+                echo
+                ;;
+            3)
+                echo -e "${GREEN}正在启动 Claude Code 集成安装...${NC}"
+                if [[ -f "scripts/install-claude-integration.sh" ]]; then
+                    if bash scripts/install-claude-integration.sh; then
+                        configured_services+=("Claude集成")
+                        echo -e "${GREEN}✅ Claude Code 集成安装完成！${NC}"
+                    else
+                        echo -e "${YELLOW}⚠️ Claude Code 集成安装未完成${NC}"
+                    fi
+                else
+                    echo -e "${YELLOW}Claude 集成脚本未找到，请手动运行: bash scripts/install-claude-integration.sh${NC}"
+                fi
+                echo
+                echo "按任意键继续..."
+                read -n 1 -s
+                echo
+                ;;
+            4)
+                echo -e "${GREEN}配置完成！${NC}"
+                if [[ ${#configured_services[@]} -gt 0 ]]; then
+                    echo -e "${GREEN}已成功配置: ${configured_services[*]}${NC}"
+                else
+                    echo -e "${YELLOW}未配置任何服务，你可以稍后手动配置：${NC}"
+                    echo "  • Bark: bash scripts/configure-bark.sh"
+                    echo "  • Server酱: bash scripts/configure-serverchan.sh"
+                    echo "  • Claude 集成: bash scripts/install-claude-integration.sh"
+                fi
+                break
+                ;;
+            *)
+                echo -e "${YELLOW}无效选项 '$choice'，请重新选择：${NC}"
+                echo
+                echo "1️⃣  配置 Bark 推送 (iOS/Apple Watch 推荐)"
+                echo "2️⃣  配置 Server酱 推送 (微信接收)"  
+                echo "3️⃣  安装 Claude Code 集成 (智能通知)"
+                echo "4️⃣  完成配置"
+                echo
+                ;;
+        esac
+    done
+}
+
+# 智能检测和配置建议
+detect_and_suggest() {
+    local suggestions=()
+    
+    # 检测 Claude Code
+    if command -v claude >/dev/null 2>&1; then
+        suggestions+=("检测到 Claude Code，强烈建议安装 Claude 集成功能！")
+    fi
+    
+    # 检测 Bark 应用相关
+    if [[ -d "/Applications/Bark.app" ]] || defaults read com.apple.dock persistent-apps 2>/dev/null | grep -q "Bark"; then
+        suggestions+=("检测到 Bark 应用，推荐配置 Bark 推送！")
+    fi
+    
+    # 显示智能建议
+    if [[ ${#suggestions[@]} -gt 0 ]]; then
+        echo -e "${BLUE}🔍 智能检测结果:${NC}"
+        for suggestion in "${suggestions[@]}"; do
+            echo -e "   ${GREEN}• $suggestion${NC}"
+        done
+        echo
+    fi
+}
+
+# 运行智能检测
+detect_and_suggest
+
+# 询问用户是否要配置
+echo -e "${YELLOW}💡 提示: 推荐先配置远程推送，再安装 Claude 集成以获得最佳体验${NC}"
+read -p "是否现在就配置推送服务和集成功能？(y/N): " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    show_interactive_setup
+fi
+
+echo
+echo -e "${GREEN}🎉 安装完成！感谢使用 TermWatch！${NC}"
