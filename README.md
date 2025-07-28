@@ -26,6 +26,9 @@
 - [🤖 Claude Code 集成](#-claude-code-集成)
   - [核心功能](#核心功能)
   - [快速配置](#快速配置)
+- [⚙️ Auto-Notify 扩展](#️-auto-notify-扩展)
+  - [扩展特性](#扩展特性)
+  - [安装和使用](#安装和使用)
 - [🛠️ 系统要求](#️-系统要求)
 - [🔧 故障排除](#-故障排除)
   - [通知不显示](#通知不显示)
@@ -46,6 +49,7 @@
 - 📱 **多种通知类型**: 成功、错误、警告、信息四种通知类型
 - 🛡️ **通知去重**: 智能去重机制，避免重复通知干扰
 - 🔗 **Hook 系统**: 支持 Claude Code 的 user-prompt-submit 和 finish-commands 钩子
+- ⚙️ **Auto-Notify 扩展**: 智能命令执行监控，自动判断长时间命令的成功/失败状态
 
 ## 🚀 快速开始
 
@@ -282,6 +286,19 @@ TermWatch/
 │   ├── configure-serverchan.sh # Server酱配置脚本
 │   ├── test-notification.sh    # 通知测试脚本
 │   └── uninstall.sh           # 卸载脚本
+├── extensions/                  # 扩展模块
+│   └── auto-notify/            # Auto-Notify 扩展
+│       ├── README.md           # 扩展说明文档
+│       ├── src/                # 扩展源码
+│       │   ├── auto_notify.sh  # 自动通知核心模块
+│       │   ├── zsh_hooks.sh    # ZSH 钩子函数
+│       │   └── log_helpers.sh  # 日志辅助函数
+│       ├── config/             # 扩展配置
+│       │   └── auto_notify.conf # 默认配置文件
+│       └── scripts/            # 扩展脚本
+│           ├── install.sh      # 安装脚本
+│           ├── uninstall.sh    # 卸载脚本
+│           └── test.sh         # 测试脚本
 └── docs/
     ├── setup-guide.md          # 详细设置指南
     ├── troubleshooting.md      # 故障排除指南
@@ -320,6 +337,108 @@ termwatch --status
 3. **智能判断**: 根据任务执行时长和类型决定是否发送通知
 
 详细配置教程请参考：[Claude Code 集成指南](docs/claude-code-integration.md)
+
+## ⚙️ Auto-Notify 扩展
+
+TermWatch Auto-Notify 扩展为 TermWatch 添加智能的命令执行监控功能，自动识别重要命令并在完成时发送通知。
+
+### 扩展特性
+
+- 🕐 **智能时间监控**: 只有超过设定阈值（默认30秒）的命令才会通知，避免被短命令轰炸
+- ✅ **自动成功/失败判断**: 根据命令退出码自动发送成功或失败通知
+- ⚡ **强制通知模式**: 使用 `!command` 可强制通知任何命令，无论执行时间
+- 🎯 **重要命令识别**: npm、docker、git 等重要命令自动通知
+- 🔍 **智能过滤**: 自动过滤 cd、ls、pwd 等短时间和无关命令
+- 🏗️ **完全集成**: 继承 TermWatch 的所有推送配置和通知样式
+
+### 安装和使用
+
+#### 通过主安装脚本安装
+```bash
+# 运行 TermWatch 安装脚本
+./install.sh
+
+# 在配置向导中选择 "4️⃣ 安装 Auto-Notify 扩展"
+```
+
+#### 独立安装
+```bash
+# 直接运行扩展安装脚本
+bash extensions/auto-notify/scripts/install.sh
+```
+
+#### 基础使用
+```bash
+# 普通命令（超过30秒才通知）
+npm install
+docker build .
+make clean && make
+
+# 强制通知（无论时间长短）
+!git status
+!ls -la
+!pwd
+
+# 重要命令（自动识别并通知）
+git push origin main
+npm start
+docker-compose up
+```
+
+#### 管理命令
+```bash
+# 查看扩展状态
+termwatch_status
+
+# 切换自动通知开关
+termwatch_toggle
+
+# 编辑配置
+nano ~/.termwatch/config/auto_notify.conf
+```
+
+#### 脚本中使用
+```bash
+#!/bin/bash
+# 加载日志辅助函数
+source ~/.termwatch/log_helpers.sh
+
+# 直接输出日志触发通知
+log_success "任务完成"
+log_error "任务失败"
+
+# 使用命令包装器
+run_with_notify "npm install" "安装依赖"
+run_with_timestamp "make build" "项目构建"
+```
+
+#### 配置选项
+扩展配置文件：`~/.termwatch/config/auto_notify.conf`
+
+```bash
+# 是否启用自动通知
+ENABLE_AUTO_NOTIFY=true
+
+# 通知阈值（秒）
+AUTO_NOTIFY_THRESHOLD=30
+
+# 忽略的命令列表
+IGNORE_COMMANDS=("cd" "ls" "pwd" "echo" "cat")
+
+# 重要命令列表（无论执行时间都会通知）
+IMPORTANT_COMMANDS=("make" "npm" "docker" "git push")
+```
+
+#### 卸载扩展
+```bash
+# 运行扩展卸载脚本
+bash extensions/auto-notify/scripts/uninstall.sh
+
+# 或使用内置卸载脚本
+bash ~/.termwatch/uninstall_auto_notify.sh
+```
+
+更多详细信息请参考：[Auto-Notify 扩展文档](extensions/auto-notify/README.md)
 
 ## 🛠️ 系统要求
 
