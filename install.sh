@@ -188,6 +188,19 @@ echo -e "${YELLOW}一键安装 Claude 集成:${NC}"
 echo "   ${YELLOW}bash scripts/install-claude-integration.sh${NC}"
 echo
 echo -e "${BLUE}==============================================="
+echo "  ⚙️ Auto-Notify 扩展 (可选)"
+echo -e "===============================================${NC}"
+echo "智能命令执行监控和自动通知扩展："
+echo "• 🕐 智能时间监控 (超过30秒的命令自动通知)"
+echo "• ✅ 自动判断命令成功/失败状态"
+echo "• ⚡ 强制通知模式 (!command)"
+echo "• 🎯 重要命令自动识别"
+echo "• 🔍 智能过滤无关命令"
+echo
+echo -e "${YELLOW}一键安装 Auto-Notify 扩展:${NC}"
+echo "   ${YELLOW}bash extensions/auto-notify/scripts/install.sh${NC}"
+echo
+echo -e "${BLUE}==============================================="
 echo "  📚 更多信息"
 echo -e "===============================================${NC}"
 echo -e "${YELLOW}配置文件:${NC} $INSTALL_DIR/config/user.conf"
@@ -198,7 +211,8 @@ echo
 echo -e "${GREEN}💡 推荐配置流程:${NC}"
 echo "   1️⃣  先配置远程推送服务 (Bark 或 Server酱)"
 echo "   2️⃣  然后安装 Claude Code 集成 (如果使用)"
-echo "   3️⃣  享受全方位的智能通知体验!"
+echo "   3️⃣  安装 Auto-Notify 扩展 (命令监控)"
+echo "   4️⃣  享受全方位的智能通知体验!"
 echo
 echo -e "${GREEN}🎯 现在就开始配置吧！${NC}"
 echo
@@ -218,7 +232,8 @@ show_interactive_setup() {
         echo "1️⃣  配置 Bark 推送 (iOS/Apple Watch 推荐)"
         echo "2️⃣  配置 Server酱 推送 (微信接收)"
         echo "3️⃣  安装 Claude Code 集成 (智能通知)"
-        echo "4️⃣  完成配置"
+        echo "4️⃣  安装 Auto-Notify 扩展 (命令执行监控)"
+        echo "5️⃣  完成配置"
         echo
         
         # 显示已配置的服务
@@ -231,7 +246,7 @@ show_interactive_setup() {
     while true; do
         show_menu_options
         
-        read -p "请选择 (1-4): " -n 1 -r choice
+        read -p "请选择 (1-5): " -n 1 -r choice
         echo
         
         case $choice in
@@ -287,6 +302,23 @@ show_interactive_setup() {
                 echo
                 ;;
             4)
+                echo -e "${GREEN}正在安装 Auto-Notify 扩展...${NC}"
+                if [[ -f "extensions/auto-notify/scripts/install.sh" ]]; then
+                    if bash extensions/auto-notify/scripts/install.sh; then
+                        configured_services+=("Auto-Notify扩展")
+                        echo -e "${GREEN}✅ Auto-Notify 扩展安装完成！${NC}"
+                    else
+                        echo -e "${YELLOW}⚠️ Auto-Notify 扩展安装未完成${NC}"
+                    fi
+                else
+                    echo -e "${YELLOW}Auto-Notify 扩展脚本未找到，请手动运行: bash extensions/auto-notify/scripts/install.sh${NC}"
+                fi
+                echo
+                echo "按任意键继续..."
+                read -n 1 -s
+                echo
+                ;;
+            5)
                 echo -e "${GREEN}配置完成！${NC}"
                 if [[ ${#configured_services[@]} -gt 0 ]]; then
                     echo -e "${GREEN}已成功配置: ${configured_services[*]}${NC}"
@@ -295,6 +327,7 @@ show_interactive_setup() {
                     echo "  • Bark: bash scripts/configure-bark.sh"
                     echo "  • Server酱: bash scripts/configure-serverchan.sh"
                     echo "  • Claude 集成: bash scripts/install-claude-integration.sh"
+                    echo "  • Auto-Notify 扩展: bash extensions/auto-notify/scripts/install.sh"
                 fi
                 break
                 ;;
@@ -304,7 +337,8 @@ show_interactive_setup() {
                 echo "1️⃣  配置 Bark 推送 (iOS/Apple Watch 推荐)"
                 echo "2️⃣  配置 Server酱 推送 (微信接收)"  
                 echo "3️⃣  安装 Claude Code 集成 (智能通知)"
-                echo "4️⃣  完成配置"
+                echo "4️⃣  安装 Auto-Notify 扩展 (命令执行监控)"
+                echo "5️⃣  完成配置"
                 echo
                 ;;
         esac
