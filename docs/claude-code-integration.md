@@ -188,11 +188,9 @@ notify_success "多渠道推送测试"
 |---------|---------|---------|---------|
 | `Notification` | Claude 发送系统通知时 | 原始通知消息 | ⚠️ 少见触发 |
 | `Stop` | Claude 完成主要任务/会话时 | "Claude Code 任务已完成" | ⚠️ 需要完全退出 |
-| `SubagentStop` | Claude 子任务完成时 | "Claude Code 任务已完成" | ⚠️ 子任务触发 |
 
 **重要说明**：
 - **Stop钩子**：只在Claude会话完全结束时触发，不是每次回答后都触发
-- **SubagentStop钩子**：在子任务完成时触发，相对更频繁
 - **Notification钩子**：系统通知时触发，较为少见
 
 ## 故障排除
@@ -205,7 +203,7 @@ notify_success "多渠道推送测试"
 - **重新启动 Claude Code**（最重要）
 - 检查 `~/.claude/settings.json` 语法是否正确：`python3 -m json.tool ~/.claude/settings.json`
 - 使用 `claude --debug` 查看钩子执行日志
-- **Stop钩子特殊情况**：只在会话完全结束时触发，可以使用SubagentStop钩子进行测试
+- **Stop钩子特殊情况**：只在会话完全结束时触发
 
 ### 1.1 钩子配置加载问题
 
@@ -357,19 +355,18 @@ echo "$CURRENT_TIME" > "$LAST_NOTIFY_FILE"
 ### ⚠️ 需要注意的问题
 - **Stop钩子**：只在会话完全结束时触发，实用性有限
 - **配置加载**：修改钩子配置后必须重启Claude Code才能生效
-- **SubagentStop钩子**：在子任务完成时触发，相对更频繁但仍然有限
 
 ## 结论
 
 通过配置 Claude Code 钩子与 TermWatch 的集成，你可以：
 
-- ✅ **实时收到任务完成通知**（通过Stop和SubagentStop钩子）
+- ✅ **实时收到任务完成通知**（通过Stop钩子）
 - ✅ **多平台推送通知**：macOS + 微信 + Apple Watch（已测试可用）
 - ✅ **统一的钩子脚本管理**（hooks目录集中管理）
 - ✅ **自定义通知内容和触发条件**
 - ✅ **灵活的钩子配置系统**
 
-**推荐配置**：根据需要使用Stop、SubagentStop和Notification钩子，Stop钩子在会话结束时触发，SubagentStop在子任务完成时触发。
+**推荐配置**：根据需要使用Stop和Notification钩子，Stop钩子在会话结束时触发。
 
 配置完成后，重新启动 Claude Code 即可享受智能通知功能！
 
