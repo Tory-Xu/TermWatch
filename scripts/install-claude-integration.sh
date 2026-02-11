@@ -297,17 +297,6 @@ configure_claude_hooks() {
           }
         ]
       }
-    ],
-    "SubagentStop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "'$HOME'/.claude/hooks/termwatch/stop.sh"
-          }
-        ]
-      }
     ]
   }
 }'
