@@ -89,7 +89,8 @@ install_plugin() {
 export const TermWatchPlugin = async ({ project, $ }) => {
   // 动态获取 HOME，避免硬编码用户名，支持多机器复用
   const home = (await $`echo $HOME`.text()).trim()
-  const TERMWATCH = `bash ${home}/.termwatch/termwatch.sh`
+  // 使用完整路径 /bin/bash，因为 Bun shell 环境里 bash 不在 PATH 中
+  const TERMWATCH = `/bin/bash ${home}/.termwatch/termwatch.sh`
 
   // 取工程名（目录路径最后一段）
   const projectName =
