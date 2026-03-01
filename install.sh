@@ -210,7 +210,7 @@ echo -e "${YELLOW}获取帮助:${NC} termwatch --help"
 echo
 echo -e "${GREEN}💡 推荐配置流程:${NC}"
 echo "   1️⃣  先配置远程推送服务 (Bark 或 Server酱)"
-echo "   2️⃣  然后安装 Claude Code 集成 (如果使用)"
+   echo "   2️⃣  然后安装 AI 工具集成 (Claude Code / OpenCode)"
 echo "   3️⃣  安装 Auto-Notify 扩展 (命令监控)"
 echo "   4️⃣  享受全方位的智能通知体验!"
 echo
@@ -232,8 +232,9 @@ show_interactive_setup() {
         echo "1️⃣  配置 Bark 推送 (iOS/Apple Watch 推荐)"
         echo "2️⃣  配置 Server酱 推送 (微信接收)"
         echo "3️⃣  安装 Claude Code 集成 (智能通知)"
-        echo "4️⃣  安装 Auto-Notify 扩展 (命令执行监控)"
-        echo "5️⃣  完成配置"
+        echo "4️⃣  安装 OpenCode 集成 (AI 任务通知)"
+        echo "5️⃣  安装 Auto-Notify 扩展 (命令执行监控)"
+        echo "6️⃣  完成配置"
         echo
         
         # 显示已配置的服务
@@ -246,7 +247,7 @@ show_interactive_setup() {
     while true; do
         show_menu_options
         
-        read -p "请选择 (1-5): " -n 1 -r choice
+        read -p "请选择 (1-6): " -n 1 -r choice
         echo
         
         case $choice in
@@ -302,6 +303,23 @@ show_interactive_setup() {
                 echo
                 ;;
             4)
+                echo -e "${GREEN}正在启动 OpenCode 集成安装...${NC}"
+                if [[ -f "scripts/configure-opencode-integration.sh" ]]; then
+                    if bash scripts/configure-opencode-integration.sh; then
+                        configured_services+=("OpenCode集成")
+                        echo -e "${GREEN}✅ OpenCode 集成安装完成！${NC}"
+                    else
+                        echo -e "${YELLOW}⚠️ OpenCode 集成安装未完成${NC}"
+                    fi
+                else
+                    echo -e "${YELLOW}OpenCode 集成脚本未找到，请手动运行: bash scripts/configure-opencode-integration.sh${NC}"
+                fi
+                echo
+                echo "按任意键继续..."
+                read -n 1 -s
+                echo
+                ;;
+            5)
                 echo -e "${GREEN}正在安装 Auto-Notify 扩展...${NC}"
                 if [[ -f "extensions/auto-notify/scripts/install.sh" ]]; then
                     if bash extensions/auto-notify/scripts/install.sh; then
@@ -318,7 +336,7 @@ show_interactive_setup() {
                 read -n 1 -s
                 echo
                 ;;
-            5)
+            6)
                 echo -e "${GREEN}配置完成！${NC}"
                 if [[ ${#configured_services[@]} -gt 0 ]]; then
                     echo -e "${GREEN}已成功配置: ${configured_services[*]}${NC}"
@@ -337,8 +355,9 @@ show_interactive_setup() {
                 echo "1️⃣  配置 Bark 推送 (iOS/Apple Watch 推荐)"
                 echo "2️⃣  配置 Server酱 推送 (微信接收)"  
                 echo "3️⃣  安装 Claude Code 集成 (智能通知)"
-                echo "4️⃣  安装 Auto-Notify 扩展 (命令执行监控)"
-                echo "5️⃣  完成配置"
+                echo "4️⃣  安装 OpenCode 集成 (AI 任务通知)"
+                echo "5️⃣  安装 Auto-Notify 扩展 (命令执行监控)"
+                echo "6️⃣  完成配置"
                 echo
                 ;;
         esac
@@ -352,6 +371,11 @@ detect_and_suggest() {
     # 检测 Claude Code
     if command -v claude >/dev/null 2>&1; then
         suggestions+=("检测到 Claude Code，强烈建议安装 Claude 集成功能！")
+    fi
+    
+    # 检测 OpenCode
+    if command -v opencode >/dev/null 2>&1 || [[ -f "/Applications/OpenCode.app/Contents/MacOS/opencode-cli" ]]; then
+        suggestions+=("检测到 OpenCode，建议安装 OpenCode 集成功能！")
     fi
     
     # 检测 Bark 应用相关
